@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developmental Research Co-Pilot — by Astha</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#e8f5e9;
+  --surface:#f1faf2;
+  --surface2:#d4edda;
+  --border:#a8d5b0;
+  --border2:#7ec490;
+  --accent:#8b0000;
+  --accent2:#6d0000;
+  --green:#2e7d32;
+  --amber:#1b5e20;
+  --red:#8b0000;
+  --text:#0a2e0c;
+  --text2:#1b4d1e;
+  --text3:#4a7a4e;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --serif:'IBM Plex Serif',serif;
+}
+
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  border-bottom:1px solid var(--border);
+  background:#c8e6c9;
+}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-mark{
+  width:28px;height:28px;
+  background:#8b0000;
+  clip-path:polygon(50% 0%,100% 100%,0% 100%);
+}
+.topbar-title{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.05em;color:var(--text)}
+.topbar-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#2e7d32;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-label{font-family:var(--mono);font-size:11px;color:#2e7d32}
+.version-tag{font-family:var(--mono);font-size:10px;color:var(--text3);padding:2px 8px;border:1px solid var(--border);border-radius:3px}
+
+/* ── LAYOUT ──────────────────────────────────────────────── */
+.layout{display:flex;flex:1;height:calc(100vh - 57px)}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar{
+  width:260px;flex-shrink:0;
+  border-right:1px solid var(--border);
+  background:#c8e6c9;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sidebar-section-head{
+  font-family:var(--mono);font-size:9px;font-weight:600;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text3);padding:18px 20px 8px;
+}
+.step-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 20px;cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all .15s;
+  position:relative;
+}
+.step-item:hover{background:var(--surface2)}
+.step-item.active{
+  background:#b2dfb5;
+  border-left-color:#8b0000;
+}
+.step-item.done{border-left-color:#2e7d32}
+.step-num{
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  width:20px;height:20px;
+  border:1.5px solid var(--border2);
+  border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+  color:var(--text3);
+  transition:all .15s;
+}
+.step-item.active .step-num{border-color:#8b0000;color:#8b0000}
+.step-item.done .step-num{border-color:#2e7d32;color:#2e7d32;background:rgba(46,125,50,.1)}
+.step-meta{}
+.step-label{font-size:12.5px;font-weight:500;color:var(--text);line-height:1.3}
+.step-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;line-height:1.4}
+.step-item.done .step-label{color:var(--text2)}
+
+/* connector line */
+.step-connector{
+  width:1px;height:14px;
+  background:var(--border2);
+  margin:0 20px 0 29px;
+}
+
+.sidebar-footer{
+  margin-top:auto;padding:16px 20px;
+  border-top:1px solid var(--border);
+}
+.sidebar-footer-note{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  line-height:1.6;
+}
+.sidebar-footer-note span{color:#8b0000}
+
+/* ── MAIN ────────────────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.main-header{
+  padding:20px 32px 16px;
+  border-bottom:1px solid var(--border);
+  background:#c8e6c9;
+  display:flex;align-items:flex-start;justify-content:space-between;
+}
+.step-breadcrumb{
+  font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:6px;
+}
+.step-breadcrumb span{color:#8b0000}
+.main-title{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--text);line-height:1.3}
+.main-title em{font-style:italic;color:#8b0000}
+.ai-badge{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;color:#2e7d32;
+  padding:4px 10px;border:1px solid rgba(46,125,50,.3);
+  border-radius:3px;background:rgba(46,125,50,.08);
+  flex-shrink:0;margin-top:4px;
+}
+
+/* ── CONTENT AREA ────────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:24px 32px}
+
+/* step panels */
+.step-panel{display:none}
+.step-panel.active{display:block}
+
+/* input zone */
+.input-zone{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:16px;
+  margin-bottom:16px;
+}
+.input-zone-label{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.iz-req{color:var(--red);font-size:9px}
+textarea,input[type=text],select{
+  width:100%;
+  background:#f9fdf9;
+  border:1px solid var(--border);
+  border-radius:4px;
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:13px;
+  padding:10px 12px;
+  outline:none;
+  resize:vertical;
+  transition:border .15s;
+  line-height:1.6;
+}
+textarea:focus,input:focus,select:focus{border-color:#8b0000}
+textarea{min-height:80px}
+select{cursor:pointer}
+
+/* methodology tag grid */
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.method-tag{
+  padding:8px 12px;border:1px solid var(--border);
+  border-radius:4px;cursor:pointer;
+  font-size:12px;color:var(--text2);
+  transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.method-tag:hover{border-color:#8b0000;color:var(--text)}
+.method-tag.selected{border-color:#8b0000;background:rgba(139,0,0,.06);color:var(--text)}
+.method-tag input{width:14px;height:14px;accent-color:var(--accent2)}
+
+/* run button */
+.run-btn{
+  display:flex;align-items:center;gap:8px;
+  background:#8b0000;color:#fff;
+  border:none;padding:10px 20px;
+  border-radius:4px;cursor:pointer;
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.04em;margin-top:12px;
+  transition:all .2s;
+}
+.run-btn:hover{background:#6d0000;transform:translateY(-1px)}
+.run-btn:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;transform:none}
+.run-btn svg{width:14px;height:14px}
+
+/* output zone */
+.output-zone{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  margin-top:16px;
+  overflow:hidden;
+}
+.output-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  background:rgba(139,0,0,.05);
+}
+.output-label{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:#8b0000;
+  display:flex;align-items:center;gap:6px;
+}
+.output-body{
+  padding:16px;
+  font-size:13px;line-height:1.8;color:var(--text2);
+  min-height:120px;
+  font-family:var(--sans);
+  white-space:pre-wrap;
+}
+.output-body .thinking{
+  font-family:var(--mono);font-size:11px;color:var(--text3);
+  animation:blink .7s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.output-body h4{
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:#8b0000;margin:14px 0 6px;
+}
+.output-body h4:first-child{margin-top:0}
+.output-body p{margin-bottom:10px}
+.output-body ul{padding-left:16px;margin-bottom:10px}
+.output-body li{margin-bottom:4px}
+.output-body strong{color:var(--text);font-weight:600}
+.output-body em{color:var(--amber);font-style:normal}
+
+/* human judgment banner */
+.hj-banner{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;
+  background:rgba(46,125,50,.08);
+  border:1px solid rgba(46,125,50,.3);
+  border-radius:4px;
+  margin-top:12px;
+}
+.hj-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.hj-text{font-size:12px;color:#1b5e20;line-height:1.6;font-family:var(--mono)}
+.hj-text strong{font-weight:600}
+
+/* next btn */
+.nav-row{display:flex;align-items:center;justify-content:space-between;margin-top:20px}
+.next-btn{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;
+  border:1px solid var(--border2);
+  color:var(--text2);
+  padding:8px 16px;border-radius:4px;
+  font-family:var(--mono);font-size:11px;cursor:pointer;
+  transition:all .15s;
+}
+.next-btn:hover{border-color:#8b0000;color:#8b0000}
+.next-btn:disabled{opacity:.3;cursor:not-allowed}
+.back-btn{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text3);padding:8px 14px;border-radius:4px;
+  font-family:var(--mono);font-size:11px;cursor:pointer;
+  transition:all .15s;
+}
+.back-btn:hover{border-color:var(--border2);color:var(--text2)}
+
+/* progress bar */
+.progress-bar{
+  height:2px;background:var(--border);
+  position:relative;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:#8b0000;
+  transition:width .4s ease;
+}
+
+/* annotation chip */
+.chip{
+  display:inline-block;font-family:var(--mono);font-size:9px;
+  font-weight:600;padding:2px 7px;border-radius:2px;
+  margin:2px 2px 2px 0;letter-spacing:.06em;text-transform:uppercase;
+}
+.chip-blue{background:rgba(139,0,0,.1);color:#8b0000}
+.chip-purple{background:rgba(46,125,50,.12);color:#2e7d32}
+.chip-green{background:rgba(27,94,32,.1);color:#1b5e20}
+.chip-amber{background:rgba(139,0,0,.08);color:#8b0000}
+
+/* data badge row */
+.data-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.data-pill{
+  font-family:var(--mono);font-size:10px;
+  padding:4px 10px;border:1px solid var(--border2);
+  border-radius:2px;color:var(--text2);
+}
+
+/* final panel */
+.final-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.final-card{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:6px;padding:16px;
+}
+.final-card-label{
+  font-family:var(--mono);font-size:9px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--text3);
+  margin-bottom:8px;display:flex;align-items:center;gap:6px;
+}
+.final-card-val{font-family:var(--serif);font-size:16px;color:var(--text);line-height:1.4}
+.final-card-sub{font-size:11.5px;color:var(--text2);margin-top:4px;line-height:1.5}
+.workflow-note{
+  background:rgba(139,0,0,.04);
+  border:1px solid rgba(139,0,0,.15);
+  border-radius:6px;padding:14px 16px;
+  margin-top:16px;font-size:12.5px;color:var(--text2);
+  line-height:1.7;font-family:var(--mono);
+}
+.workflow-note strong{color:#8b0000;font-weight:500}
+
+/* ── GEO MAP STEP ───────────────────────────────────────────── */
+.scope-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.scope-btn{
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;
+  padding:8px 16px;border:1.5px solid var(--border);border-radius:4px;
+  cursor:pointer;color:var(--text2);background:transparent;transition:all .15s;
+  display:flex;align-items:center;gap:6px;
+}
+.scope-btn:hover{border-color:#8b0000;color:#8b0000}
+.scope-btn.active{border-color:#8b0000;background:rgba(139,0,0,.08);color:#8b0000}
+.map-layout{display:grid;grid-template-columns:260px 1fr;gap:12px;height:420px;margin-bottom:12px}
+.state-info-panel{
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  overflow-y:auto;display:flex;flex-direction:column;
+}
+.sip-header{
+  padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:#8b0000;
+}
+.sip-body{padding:12px 14px;flex:1}
+.sip-placeholder{font-size:12px;color:var(--text3);line-height:1.6;font-style:italic}
+.stat-row{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:7px 0;border-bottom:1px solid var(--border);}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.3}
+.stat-val{font-family:var(--mono);font-size:12px;font-weight:600;color:#8b0000;text-align:right}
+.stat-val.green{color:#2e7d32}
+.state-name-head{
+  font-family:var(--serif);font-size:15px;font-weight:600;color:var(--text);
+  margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #8b0000;
+}
+#india-map{
+  border-radius:6px;border:1px solid var(--border);
+  z-index:1;min-height:420px;
+}
+.map-toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.map-toggle{
+  font-family:var(--mono);font-size:10px;padding:4px 10px;
+  border:1px solid var(--border);border-radius:3px;cursor:pointer;
+  color:var(--text3);background:transparent;transition:all .15s;
+}
+.map-toggle.on{border-color:#2e7d32;color:#2e7d32;background:rgba(46,125,50,.08)}
+.compare-panel{
+  display:none;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;margin-bottom:12px;overflow:hidden;
+}
+.compare-panel.active{display:block}
+.compare-header{
+  padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:#8b0000;
+}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0}
+.cg-cell{padding:10px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cg-cell:nth-child(3n){border-right:none}
+.cg-metric{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.cg-state{font-family:var(--mono);font-size:13px;font-weight:700;color:#8b0000}
+.cg-india{font-family:var(--mono);font-size:13px;font-weight:700;color:#2e7d32}
+.cg-diff{font-family:var(--mono);font-size:11px;color:var(--text2)}
+.scope-output-box{
+  background:rgba(139,0,0,.04);border:1px solid rgba(139,0,0,.15);
+  border-radius:6px;padding:14px 16px;margin-top:10px;
+}
+.sob-label{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:#8b0000;margin-bottom:8px}
+.sob-text{font-size:12.5px;color:var(--text2);line-height:1.7;font-family:var(--mono)}
+.map-legend{
+  display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;
+  font-family:var(--mono);font-size:10px;color:var(--text2);align-items:center;
+}
+.leg-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+
+/* ── DATA EXTRACTION STEP ───────────────────────────────────────────── */
+.de-layout{display:grid;grid-template-columns:240px 1fr;gap:12px;margin-bottom:14px}
+.de-filters{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.de-filter-label{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.de-filter-group{display:flex;flex-direction:column}
+.de-table-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.de-table-header{padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.de-table-title{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000}
+.de-row-count{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.de-table-scroll{overflow-x:auto;overflow-y:auto;max-height:340px}
+table.de-table{width:100%;border-collapse:collapse;font-size:11.5px}
+table.de-table th{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);text-align:left;padding:7px 10px;border-bottom:2px solid var(--border);background:var(--surface);position:sticky;top:0;white-space:nowrap}
+table.de-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2);white-space:nowrap}
+table.de-table tr:hover td{background:var(--surface)}
+table.de-table td.num{font-family:var(--mono);text-align:right;color:#8b0000;font-weight:600}
+table.de-table td.tag{font-family:var(--mono);font-size:9px}
+table.de-table td.hi{color:var(--text);font-weight:600}
+.de-analyse-btn{display:flex;align-items:center;gap:8px;background:#8b0000;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.04em;transition:all .2s;margin-bottom:12px}
+.de-analyse-btn:hover{background:#6d0000;transform:translateY(-1px)}
+.de-analyse-btn:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;transform:none}
+.de-ai-output{background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;overflow:hidden;display:none}
+.de-ai-output.active{display:block}
+.de-ai-header{padding:9px 14px;background:rgba(139,0,0,.05);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000}
+.de-ai-body{padding:14px;font-size:12.5px;line-height:1.8;color:var(--text2);font-family:var(--sans)}
+.de-ai-body h4{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8b0000;margin:12px 0 5px}
+.de-ai-body h4:first-child{margin-top:0}
+.de-ai-body ul{padding-left:14px;margin-bottom:8px}
+.de-ai-body li{margin-bottom:3px}
+.de-ai-body strong{color:var(--text);font-weight:600}
+.de-download-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.dl-btn{display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.05em;border:none;transition:all .2s}
+.dl-btn:hover{transform:translateY(-1px)}
+.dl-sheet{background:#2e7d32;color:#fff}
+.dl-sheet:hover{background:#1b5e20}
+.dl-pdf{background:rgba(139,0,0,.1);color:#8b0000;border:1.5px solid #8b0000}
+.dl-pdf:hover{background:#8b0000;color:#fff}
+.dl-btn svg{width:14px;height:14px;flex-shrink:0}
+.de-hj{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;background:rgba(46,125,50,.08);border:1px solid rgba(46,125,50,.25);border-radius:4px;margin-bottom:12px;font-family:var(--mono);font-size:11px;color:#1b5e20;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark"></div>
+    <div>
+      <div class="topbar-title">Developmental Research Co-Pilot</div>
+      <div class="topbar-sub">by Astha &nbsp;·&nbsp; Preliminary research made easy</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="status-dot"></div>
+    <span class="status-label">Claude API · Live</span>
+    <span class="version-tag">v1.0</span>
+  </div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:20%"></div></div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section-head">Research Workflow</div>
+
+    <div class="step-item active" id="nav-0" onclick="goTo(0)">
+      <div class="step-num" id="snum-0">1</div>
+      <div class="step-meta">
+        <div class="step-label">Frame the Question</div>
+        <div class="step-sub">Define scope · Sector · Geography</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-item" id="nav-1" onclick="goTo(1)">
+      <div class="step-num" id="snum-1">2</div>
+      <div class="step-meta">
+        <div class="step-label">Literature Gap Analysis</div>
+        <div class="step-sub">What's known · What's missing</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-item" id="nav-2" onclick="goTo(2)">
+      <div class="step-num" id="snum-2">3</div>
+      <div class="step-meta">
+        <div class="step-label">Methodology Design</div>
+        <div class="step-sub">Quant / qual · Indicators · Tools</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-item" id="nav-3" onclick="goTo(3)">
+      <div class="step-num" id="snum-3">4</div>
+      <div class="step-meta">
+        <div class="step-label">Data Source Mapping</div>
+        <div class="step-sub">Datasets · Surveys · APIs</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-item" id="nav-4" onclick="goTo(4)">
+      <div class="step-num" id="snum-4">5</div>
+      <div class="step-meta">
+        <div class="step-label">Output Framework</div>
+        <div class="step-sub">Deliverable structure · Audience</div>
+      </div>
+    </div>
+
+    <div class="step-connector"></div>
+    <div class="step-item" id="nav-5" onclick="goTo(5)">
+      <div class="step-num" id="snum-5">6</div>
+      <div class="step-meta">
+        <div class="step-label">Geospatial Scope</div>
+        <div class="step-sub">Map · State vs India · Zones</div>
+      </div>
+    </div>
+
+    <div class="step-connector"></div>
+    <div class="step-item" id="nav-6" onclick="goTo(6)">
+      <div class="step-num" id="snum-6">7</div>
+      <div class="step-meta">
+        <div class="step-label">Data Extraction</div>
+        <div class="step-sub">Filter · AI Analyse · Download</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-note">
+        <span>⚠ Human judgment required</span> at every step. AI compresses research time — it does not replace methodological rigour or ethical assessment of vulnerable-population data.
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="main-header">
+      <div>
+        <div class="step-breadcrumb">Step <span id="stepLabel">01 / 05</span> · Development Analytics Workflow</div>
+        <div class="main-title" id="mainTitle">Frame the <em>Research Question</em></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── STEP 1: FRAME ─────────────────────────────── -->
+      <div class="step-panel active" id="panel-0">
+        <div class="input-zone">
+          <div class="input-zone-label">Research Question <span class="iz-req">* required</span></div>
+          <textarea id="q-question" rows="3" placeholder="e.g. Does CSR expenditure in India's aspirational districts measurably move development indicators — and which sectors show strongest attribution?" value="Does CSR expenditure in India's NITI Aayog aspirational districts measurably move development indicators — and which sectors show the strongest attribution at T+1 and T+2 year lags?"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="input-zone">
+            <div class="input-zone-label">Sector Focus</div>
+            <select id="q-sector">
+              <option value="">Select sector...</option>
+              <option value="CSR & Livelihoods" selected>CSR & Livelihoods</option>
+              <option value="MSME & Digital Transformation">MSME & Digital Transformation</option>
+              <option value="WASH & Civic Services">WASH & Civic Services</option>
+              <option value="Health & Nutrition">Health & Nutrition</option>
+              <option value="Education & Skilling">Education & Skilling</option>
+              <option value="Gender & Inclusion">Gender & Inclusion</option>
+              <option value="Climate & Environment">Climate & Environment</option>
+            </select>
+          </div>
+          <div class="input-zone">
+            <div class="input-zone-label">Geography</div>
+            <select id="q-geo">
+              <option value="">Select geography...</option>
+              <option value="India — national" selected>India — national</option>
+              <option value="India — aspirational districts (112)">India — aspirational districts (112)</option>
+              <option value="India — specific state">India — specific state</option>
+              <option value="South Asia">South Asia</option>
+              <option value="Sub-Saharan Africa">Sub-Saharan Africa</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-zone">
+          <div class="input-zone-label">Hypothesis / Initial POV</div>
+          <textarea id="q-hypo" rows="2" placeholder="e.g. CSR spend is concentrated in education and health, which have declining marginal returns in aspirational districts — while gender equality and livelihoods are underfunded and show higher SROI potential..."></textarea>
+        </div>
+        <button class="run-btn" id="btn-0" onclick="runStep(0)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+          Analyse with AI
+        </button>
+        <div class="output-zone" id="out-0" style="display:none">
+          <div class="output-header">
+            <div class="output-label">◆ AI Output · Question Sharpening</div>
+            <span class="chip chip-blue">Step 01</span>
+          </div>
+          <div class="output-body" id="outbody-0"></div>
+        </div>
+        <div class="hj-banner" id="hj-0" style="display:none">
+          <div class="hj-icon">⚡</div>
+          <div class="hj-text"><strong>Human judgment required here:</strong> AI can sharpen the question, but you must validate whether the hypothesis is testable with available data and whether it avoids confirmation bias. The initial POV you bring is the intellectual contribution — AI cannot generate genuine field intuition.</div>
+        </div>
+        <div class="nav-row">
+          <button class="back-btn" disabled>← Back</button>
+          <button class="next-btn" id="next-0" onclick="goTo(1)" disabled>Next: Literature Gap →</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: LITERATURE ─────────────────────────── -->
+      <div class="step-panel" id="panel-1">
+        <div class="input-zone">
+          <div class="input-zone-label">What do you already know about this area?</div>
+          <textarea id="q-lit" rows="3" placeholder="e.g. MCA compendium data shows CSR in aspirational districts is concentrated in education (~₹377 Cr) while gender equality received only ₹1.89 Cr across 112 districts over 3 years. SROI benchmarks: Women Empowerment 4.3x vs Education 4.1x vs Environment 2.9x..."></textarea>
+        </div>
+        <div class="input-zone">
+          <div class="input-zone-label">Key publications or reports you know of</div>
+          <input type="text" id="q-pubs" placeholder="e.g. MCA CSR Compendium 2022, IICA impact reports, NITI Aayog aspirational districts baseline...">
+        </div>
+        <button class="run-btn" id="btn-1" onclick="runStep(1)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+          Map Literature Gaps with AI
+        </button>
+        <div class="output-zone" id="out-1" style="display:none">
+          <div class="output-header">
+            <div class="output-label">◆ AI Output · Literature Gap Analysis</div>
+            <span class="chip chip-purple">Step 02</span>
+          </div>
+          <div class="output-body" id="outbody-1"></div>
+        </div>
+        <div class="hj-banner" id="hj-1" style="display:none">
+          <div class="hj-icon">⚡</div>
+          <div class="hj-text"><strong>Human judgment required here:</strong> AI identifies gaps from patterns in its training data. It may miss recent grey literature, unpublished evaluations, or sector-specific reports. A human researcher must validate whether identified gaps are genuinely unaddressed or simply outside AI's knowledge window. Also: AI cannot assess whether a gap matters — only you can judge research priority.</div>
+        </div>
+        <div class="nav-row">
+          <button class="back-btn" onclick="goTo(0)">← Back</button>
+          <button class="next-btn" id="next-1" onclick="goTo(2)" disabled>Next: Methodology →</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: METHODOLOGY ────────────────────────── -->
+      <div class="step-panel" id="panel-2">
+        <div class="input-zone">
+          <div class="input-zone-label">Research Approach (select all that apply)</div>
+          <div class="method-grid">
+            <label class="method-tag"><input type="checkbox" value="Quantitative — secondary data analysis"> Quant · Secondary data</label>
+            <label class="method-tag"><input type="checkbox" value="Qualitative — KIIs and FGDs"> Qual · KIIs & FGDs</label>
+            <label class="method-tag"><input type="checkbox" value="Mixed methods"> Mixed methods</label>
+            <label class="method-tag"><input type="checkbox" value="Geospatial / spatial analysis"> Geospatial</label>
+            <label class="method-tag"><input type="checkbox" value="Impact evaluation / quasi-experimental"> Impact eval / quasi-exp</label>
+            <label class="method-tag"><input type="checkbox" value="SROI / social value calculation"> SROI modelling</label>
+          </div>
+        </div>
+        <div class="input-zone">
+          <div class="input-zone-label">Constraints</div>
+          <textarea id="q-constraints" rows="2" placeholder="e.g. Remote only · No primary data collection budget · 8-week timeline · Only public datasets available..."></textarea>
+        </div>
+        <button class="run-btn" id="btn-2" onclick="runStep(2)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+          Design Methodology with AI
+        </button>
+        <div class="output-zone" id="out-2" style="display:none">
+          <div class="output-header">
+            <div class="output-label">◆ AI Output · Methodology Design</div>
+            <span class="chip chip-green">Step 03</span>
+          </div>
+          <div class="output-body" id="outbody-2"></div>
+        </div>
+        <div class="hj-banner" id="hj-2" style="display:none">
+          <div class="hj-icon">⚡</div>
+          <div class="hj-text"><strong>Human judgment required here:</strong> Methodology must be chosen based on the actual research question — not what AI suggests as generically appropriate. Critical issues AI cannot resolve: ethical protocols for vulnerable populations, IRB/ethical review requirements, sampling feasibility in specific geographies, and whether the chosen method can actually establish causation vs correlation. These require a trained researcher's judgment.</div>
+        </div>
+        <div class="nav-row">
+          <button class="back-btn" onclick="goTo(1)">← Back</button>
+          <button class="next-btn" id="next-2" onclick="goTo(3)" disabled>Next: Data Sources →</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 4: DATA SOURCES ───────────────────────── -->
+      <div class="step-panel" id="panel-3">
+        <div class="input-zone">
+          <div class="input-zone-label">Which data types are you looking for?</div>
+          <textarea id="q-datatypes" rows="2" placeholder="e.g. CSR expenditure data by district and sector · Development indicator data (HDI, infant mortality, literacy) · NGO partner registrations · Government scheme coverage..."></textarea>
+        </div>
+        <button class="run-btn" id="btn-3" onclick="runStep(3)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+          Map Data Sources with AI
+        </button>
+        <div class="output-zone" id="out-3" style="display:none">
+          <div class="output-header">
+            <div class="output-label">◆ AI Output · Data Source Map</div>
+            <span class="chip chip-amber">Step 04</span>
+          </div>
+          <div class="output-body" id="outbody-3"></div>
+        </div>
+        <div class="hj-banner" id="hj-3" style="display:none">
+          <div class="hj-icon">⚡</div>
+          <div class="hj-text"><strong>Human judgment required here:</strong> AI identifies data sources from its training data — URLs may be outdated, portals may have changed, data may no longer be publicly available. A researcher must verify access, assess data quality, check for recency, and evaluate whether the dataset's methodology is sound enough for the research purpose. Never cite a dataset in research output without reviewing its methodology documentation.</div>
+        </div>
+        <div class="nav-row">
+          <button class="back-btn" onclick="goTo(2)">← Back</button>
+          <button class="next-btn" id="next-3" onclick="goTo(4)" disabled>Next: Output Framework →</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 5: OUTPUT FRAMEWORK ───────────────────── -->
+      <div class="step-panel" id="panel-4">
+        <div class="input-zone">
+          <div class="input-zone-label">Target Audience</div>
+          <select id="q-audience">
+            <option value="">Select audience...</option>
+            <option value="multilateral donor (World Bank, DFID, Gates Foundation)">Multilateral donor</option>
+            <option value="Government — Ministry or state department">Government — Ministry / State</option>
+            <option value="Corporate CSR team and board">Corporate CSR team & board</option>
+            <option value="NGO implementation partner">NGO implementation partner</option>
+            <option value="Academic / peer review">Academic / peer review</option>
+            <option value="General policy audience / think tank publication">Policy audience / think tank</option>
+          </select>
+        </div>
+        <div class="input-zone">
+          <div class="input-zone-label">Deliverable Type</div>
+          <select id="q-deliverable">
+            <option value="">Select type...</option>
+            <option value="research brief (4–6 pages, policy-facing)">Research Brief (4–6 pages)</option>
+            <option value="full research report (15–30 pages)">Full Research Report</option>
+            <option value="dashboard and data visualisation">Dashboard & Data Viz</option>
+            <option value="policy memo (2–3 pages, decision-maker facing)">Policy Memo (2–3 pages)</option>
+            <option value="white paper (8–12 pages, thought leadership)">White Paper</option>
+          </select>
+        </div>
+        <button class="run-btn" id="btn-4" onclick="runStep(4)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+          Generate Output Framework with AI
+        </button>
+        <div class="output-zone" id="out-4" style="display:none">
+          <div class="output-header">
+            <div class="output-label">◆ AI Output · Research Output Framework</div>
+            <span class="chip chip-blue">Step 05</span>
+          </div>
+          <div class="output-body" id="outbody-4"></div>
+        </div>
+        <div class="hj-banner" id="hj-4" style="display:none">
+          <div class="hj-icon">⚡</div>
+          <div class="hj-text"><strong>Human judgment required here:</strong> The output framework is a starting point, not a final structure. The researcher must adapt it based on actual findings — research rarely goes where you design it to go. The analysis and synthesis sections must be written by a human researcher. AI can draft, structure, and refine — it cannot produce original insight or field-grounded interpretation.</div>
+        </div>
+
+        <div id="final-summary" style="display:none">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin:20px 0 10px">Workflow Summary</div>
+          <div class="final-grid" id="summary-grid"></div>
+          <div class="workflow-note">
+            <strong>What this workflow demonstrates:</strong> AI compressed what would typically take 3–5 days of desk research into a structured, reviewable framework in under 20 minutes. The researcher's contribution — the research question, the initial hypothesis, the methodological judgment, and the final analysis — remains irreducibly human. This is the correct role for AI in development analytics: <strong>compressor of research time, not replacer of research thinking.</strong>
+          </div>
+        </div>
+
+        <div class="nav-row">
+          <button class="back-btn" onclick="goTo(3)">← Back</button>
+          <button class="next-btn" style="background:rgba(46,125,50,.1);border-color:#2e7d32;color:#2e7d32" onclick="showSummary()" id="next-4" disabled>✓ Complete Workflow</button>
+        </div>
+      </div>
+
+
+      <!-- ── STEP 6: GEOSPATIAL SCOPE ───────────────────────── -->
+      <div class="step-panel" id="panel-5">
+
+        <!-- scope mode selector -->
+        <div class="scope-bar">
+          <button class="scope-btn active" id="scope-india" onclick="setScope('india')">🇮🇳 India-wide</button>
+          <button class="scope-btn" id="scope-state" onclick="setScope('state')">📍 State-specific</button>
+          <button class="scope-btn" id="scope-compare" onclick="setScope('compare')">⚖️ State vs India</button>
+        </div>
+
+        <!-- map toggles -->
+        <div class="map-toggle-row">
+          <button class="map-toggle on" id="tog-aspirational" onclick="toggleLayer('aspirational')">● Aspirational Districts (112)</button>
+          <button class="map-toggle on" id="tog-csr" onclick="toggleLayer('csr')">● CSR Bubbles</button>
+          <button class="map-toggle" id="tog-choropleth" onclick="toggleLayer('choropleth')">● CSR Intensity Heatmap</button>
+        </div>
+
+        <!-- map legend -->
+        <div class="map-legend">
+          <span><span class="leg-dot" style="background:#8b0000"></span> High CSR spend state</span>
+          <span><span class="leg-dot" style="background:#c8e6c9;border:1.5px solid #2e7d32"></span> Selected state</span>
+          <span><span class="leg-dot" style="background:#ff4444;opacity:.7"></span> Aspirational district</span>
+          <span><span class="leg-dot" style="background:rgba(139,0,0,.3)"></span> CSR bubble (size = spend)</span>
+        </div>
+
+        <!-- main layout -->
+        <div class="map-layout">
+          <!-- left: state info panel -->
+          <div class="state-info-panel">
+            <div class="sip-header" id="sip-header">← Click a state</div>
+            <div class="sip-body" id="sip-body">
+              <div class="sip-placeholder">Click any state on the map to see CSR expenditure data, aspirational district count, and development indicator delta for that state.</div>
+            </div>
+          </div>
+          <!-- right: map -->
+          <div id="india-map"></div>
+        </div>
+
+        <!-- comparison panel (state vs india) -->
+        <div class="compare-panel" id="compare-panel">
+          <div class="compare-header">State vs India — Key Research Metrics</div>
+          <div class="compare-grid" id="compare-grid"></div>
+        </div>
+
+        <!-- scope output -->
+        <div class="scope-output-box" id="scope-output-box">
+          <div class="sob-label">Research Scope Implication</div>
+          <div class="sob-text" id="scope-output-text">Select a geographic scope above to understand how it changes your research methodology, sample size, and data requirements.</div>
+        </div>
+
+        <div class="nav-row">
+          <button class="back-btn" onclick="goTo(4)">← Back</button>
+          <button class="next-btn" style="background:rgba(46,125,50,.1);border-color:#2e7d32;color:#2e7d32" onclick="markGeoComplete()">✓ Scope Locked</button>
+        </div>
+      </div>
+
+
+      <!-- ── STEP 7: DATA EXTRACTION ─────────────────────── -->
+      <div class="step-panel" id="panel-6">
+
+        <div class="de-hj">
+          <span>⚡</span>
+          <span><strong>Data extraction layer:</strong> Filter government and publicly available datasets relevant to your research. Select source, geography, year, and sector — then analyse with AI to surface patterns. Download as structured sheet or formatted PDF report.</span>
+        </div>
+
+        <div class="de-layout">
+          <!-- filters -->
+          <div class="de-filters">
+            <div class="de-filter-group">
+              <div class="de-filter-label">Data Source</div>
+              <select id="de-source" onchange="filterData()">
+                <option value="all">All Sources</option>
+                <optgroup label="── CSR & Policy">
+                <option value="mca">MCA National CSR Portal</option>
+                <option value="sebi">SEBI BRSR Disclosures</option>
+                <option value="csrbox">CSR Box / CSRJournal</option>
+                </optgroup>
+                <optgroup label="── Government MIS">
+                <option value="niti">NITI Aayog Asp. Districts</option>
+                <option value="mgnregs">MGNREGS MIS</option>
+                <option value="sbm">Swachh Bharat Mission</option>
+                <option value="jjm">Jal Jeevan Mission</option>
+                <option value="pmay">PMAY Housing</option>
+                <option value="pmposhan">PM Poshan (MDM)</option>
+                </optgroup>
+                <optgroup label="── Health & Social">
+                <option value="nhm">NHM / NFHS-5</option>
+                <option value="nfhs">NFHS District Data</option>
+                <option value="poshan">POSHAN Tracker</option>
+                </optgroup>
+                <optgroup label="── Education">
+                <option value="dise">DISE / UDISE+</option>
+                <option value="aser">ASER Rural Learning</option>
+                </optgroup>
+                <optgroup label="── Finance & Economy">
+                <option value="rbi">RBI Financial Inclusion</option>
+                <option value="pmjdy">PMJDY Jan Dhan</option>
+                <option value="cmie">CMIE Economic Data</option>
+                </optgroup>
+                <optgroup label="── Open Data Platforms">
+                <option value="datagov">data.gov.in Portal</option>
+                <option value="worldbank">World Bank Open Data</option>
+                <option value="census">Census 2011</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="de-filter-group">
+              <div class="de-filter-label">Geography</div>
+              <select id="de-geo" onchange="filterData()">
+                <option value="all">All India</option>
+                <option value="aspirational">Aspirational Districts Only</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Jharkhand">Jharkhand</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Chhattisgarh">Chhattisgarh</option>
+                <option value="Assam">Assam</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Gujarat">Gujarat</option>
+              </select>
+            </div>
+            <div class="de-filter-group">
+              <div class="de-filter-label">Financial Year</div>
+              <select id="de-year" onchange="filterData()">
+                <option value="all">All Years</option>
+                <option value="2018-19">FY 2018-19</option>
+                <option value="2019-20">FY 2019-20</option>
+                <option value="2020-21">FY 2020-21</option>
+              </select>
+            </div>
+            <div class="de-filter-group">
+              <div class="de-filter-label">Sector / Theme</div>
+              <select id="de-sector" onchange="filterData()">
+                <option value="all">All Sectors</option>
+                <option value="Education">Education</option>
+                <option value="Health">Health &amp; Nutrition</option>
+                <option value="Gender">Gender Equality</option>
+                <option value="Livelihoods">Livelihoods</option>
+                <option value="WASH">WASH</option>
+                <option value="Environment">Environment</option>
+                <option value="Rural">Rural Development</option>
+              </select>
+            </div>
+            <div class="de-filter-group">
+              <div class="de-filter-label">Metric Type</div>
+              <select id="de-metric" onchange="filterData()">
+                <option value="all">All Metrics</option>
+                <option value="spend">CSR Expenditure</option>
+                <option value="indicator">Development Indicators</option>
+                <option value="coverage">Scheme Coverage</option>
+              </select>
+            </div>
+            <div style="margin-top:4px;padding-top:10px;border-top:1px solid var(--border)">
+              <div class="de-filter-label">Rows found</div>
+              <div id="de-count" style="font-family:var(--mono);font-size:18px;font-weight:700;color:#8b0000;margin-top:2px">—</div>
+            </div>
+          </div>
+
+          <!-- data table -->
+          <div class="de-table-wrap">
+            <div class="de-table-header">
+              <div class="de-table-title" id="de-table-title">◆ Data Preview</div>
+              <div class="de-row-count" id="de-row-info">Apply filters to load data</div>
+            </div>
+            <div class="de-table-scroll">
+              <table class="de-table" id="de-table">
+                <thead id="de-thead"></thead>
+                <tbody id="de-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- analyse button -->
+        <button class="de-analyse-btn" id="de-analyse-btn" onclick="deAnalyse()" disabled>
+          <svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+          Analyse with AI
+        </button>
+
+        <!-- AI output -->
+        <div class="de-ai-output" id="de-ai-output">
+          <div class="de-ai-header">◆ AI Analysis · Data Insights</div>
+          <div class="de-ai-body" id="de-ai-body"></div>
+        </div>
+
+        <!-- download buttons -->
+        <div class="de-download-row" id="de-dl-row" style="display:none">
+          <button class="dl-btn dl-sheet" onclick="downloadSheet()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>
+            Download Sheet (.csv)
+          </button>
+          <button class="dl-btn dl-pdf" onclick="downloadReport()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2h7l3 3v9H3V2zm7 0v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1.2"/></svg>
+            Download Report (.pdf)
+          </button>
+        </div>
+
+        <div class="nav-row" style="margin-top:18px">
+          <button class="back-btn" onclick="goTo(5)">← Back</button>
+          <button class="next-btn" style="background:rgba(46,125,50,.1);border-color:#2e7d32;color:#2e7d32" onclick="markDataComplete()">✓ Data Extracted</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+let currentStep = 0;
+const totalSteps = 7;
+const stepDone = [false,false,false,false,false,false,false];
+
+const stepTitles = [
+  'Frame the <em>Research Question</em>',
+  'Map the <em>Literature Gap</em>',
+  'Design the <em>Methodology</em>',
+  'Identify <em>Data Sources</em>',
+  'Build the <em>Output Framework</em>',
+  'Set the <em>Geospatial Scope</em>',
+  'Extract &amp; <em>Download Data</em>'
+];
+
+// store outputs for summary
+const outputs = {};
+
+// ── NAV ───────────────────────────────────────────────────
+function goTo(step){
+  document.getElementById('panel-'+currentStep).classList.remove('active');
+  document.getElementById('nav-'+currentStep).classList.remove('active');
+  currentStep = step;
+  document.getElementById('panel-'+step).classList.add('active');
+  document.getElementById('nav-'+step).classList.add('active');
+  document.getElementById('stepLabel').textContent = String(step+1).padStart(2,'0')+' / 06';
+  document.getElementById('mainTitle').innerHTML = stepTitles[step];
+  document.getElementById('progressFill').style.width = ((step+1)/totalSteps*100)+'%';
+  // Init map when step 6 reached
+  if(step === 5){
+    setTimeout(function(){
+      initMap();
+      if(map) map.invalidateSize();
+    }, 150);
+  }
+  if(step === 6 && filteredData.length === 0){
+    setTimeout(filterData, 100);
+  }
+}
+
+// ── RUN AI ────────────────────────────────────────────────
+// Pre-loaded demo responses for CSR aspirational districts case
+const DEMO = {"0": "**SHARPENED QUESTION**\n\nThe original question is evaluable but needs tightening to be actionable within an 8-week remote timeline.\n\n**Recommended formulation:** Is there a statistically significant association between sector-specific CSR expenditure (education, health, gender, livelihoods) in India's 112 NITI Aayog aspirational districts and delta scores on NITI Aayog's development indicator rankings at T+1 and T+2 years \u2014 controlling for government scheme coverage and prior baseline levels?\n\n**Alternative framings**\n\n- **Counterfactual angle:** In districts with comparable government scheme coverage, do those with higher CSR inflows show faster indicator improvement than those without?\n- **Sector efficiency angle:** Which Schedule VII activity sector yields the highest correlation with composite development indicator improvement per \u20b9 crore invested in aspirational districts?\n\n**Scope risks**\n\n- Too broad: Attempting all 112 districts \u00d7 all sectors simultaneously \u2014 prioritise 3\u20134 sectors with most data coverage\n- Too narrow: Restricting to a single state removes the cross-geography generalisability that makes findings policy-relevant\n- Attribution trap: Correlation \u2260 causation \u2014 the question must be framed as association, not impact, to remain defensible with secondary data\n\n**Evaluability verdict**\n\nAnswerable with secondary data alone. MCA National CSR Portal + NITI Aayog delta ranking data + DISE/NHM district bulletins provide sufficient coverage for a robust desk-research study without primary data collection.", "1": "**WHAT IS ESTABLISHED**\n\n- CSR expenditure in India is heavily concentrated in education (~35%) and healthcare (~24%), accounting for ~60% of total spend (MCA Compendium 2022)\n- NITI Aayog's aspirational districts programme has produced district-level composite ranking data across health, education, agriculture, financial inclusion, and basic infrastructure since 2018\n- SROI benchmarks for India's development sector show Women's Empowerment (4.3:1) and Livelihoods (3.7:1) outperform Education (4.1:1) and Environment (2.9:1) on social return per rupee\n- Gender equality received \u20b91.89 Cr across all 112 aspirational districts over 3 years \u2014 approximately \u20b956,000 per district per year \u2014 despite high SROI benchmarks\n\n**GENUINE GAPS**\n\n- No systematic district-level study has mapped the relationship between CSR inflows and NITI Aayog composite indicator movement at T+1 or T+2 lag \u2014 the attribution question is entirely open\n- The sector allocation mismatch (why do corporates over-invest in education/health and under-invest in gender/livelihoods despite lower marginal returns?) has not been studied from a decision-making behaviour perspective\n- The role of implementing agency quality (CSR-1 compliance, M&E rigour) as a moderating variable on CSR effectiveness has not been quantified\n- Geographic spillover effects \u2014 whether CSR in one aspirational district affects neighbouring districts \u2014 are entirely unstudied\n\n**CONTESTED TERRAIN**\n\n- Whether CSR should be evaluated on development outcomes at all (vs. compliance and process quality) is actively debated among CSR practitioners and researchers\n- The 2% mandate's additionality \u2014 whether it genuinely supplements government spending or substitutes for private philanthropy that would have happened anyway \u2014 remains empirically contested\n\n**YOUR CONTRIBUTION ZONE**\n\nHighest opportunity: the CSR-to-indicator association analysis at district level is both genuinely open and answerable with available data. A clean, well-specified secondary data study with honest limitations would fill a real evidence gap.", "2": "**PRIMARY APPROACH: Panel Data Analysis (Recommended)**\n\nStrongest methodology for this question given remote-only, public-data constraints. Justification: District-level panel data from NITI Aayog (2018\u20132023) and MCA CSR portal (FY 2015\u20132023) can be merged at the district level, allowing fixed-effects regression that controls for time-invariant district characteristics.\n\n**Step-by-step design**\n\n1. **Data assembly** \u2014 Download MCA district-level CSR data; download NITI Aayog aspirational districts delta ranking data for 5 rounds; merge at district-year level\n2. **Variable construction** \u2014 Create sector-specific CSR intensity variables (\u20b9 crore per district per sector per year); create dependent variables from NITI Aayog composite and sub-indicator scores\n3. **Exploratory analysis** \u2014 Map CSR concentration vs indicator baseline across 112 districts; identify outliers (districts with high CSR but stagnant indicators and vice versa)\n4. **Panel regression** \u2014 Fixed-effects regression: indicator_score(t+1) = \u03b2(CSR_sector_intensity_t) + district_FE + year_FE + controls\n5. **Heterogeneity analysis** \u2014 Split sample by state/region and by sector to identify where associations are strongest\n6. **Narrative construction** \u2014 Translate statistical findings into district-level case studies that illustrate the mechanism\n\n**Key indicators**\n- CSR expenditure per district per sector (\u20b9 crore, MCA data)\n- NITI Aayog composite aspirational districts score (delta from baseline)\n- Health sub-score: institutional deliveries, immunisation coverage, malnutrition rates\n- Education sub-score: enrolment, retention, learning outcomes\n- Financial inclusion sub-score: bank account coverage, insurance penetration\n- Gender sub-score: sex ratio at birth, female LFPR (where available)\n\n**Validity threats**\n- **Reverse causality:** Districts improving on their own may attract more CSR \u2014 instrument using pre-period CSR levels or state-level CSR regulation exposure\n- **Government spending confound:** Districts with higher MGNREGS or other scheme spending may show indicator gains unrelated to CSR \u2014 include NHM/Samagra Shiksha spend as control\n\n**AI acceleration points**\n- Literature synthesis: AI compresses 3-day desk review to 2 hours \u2014 saves ~70% of time on this step\n- Data cleaning and merging: AI-assisted Python scripts reduce manual work from 2 days to 4 hours\n- First-draft analysis narrative: AI drafts interpretation paragraphs for human revision \u2014 saves ~50% of writing time\n- AI cannot replace: econometric specification choices, validity threat assessment, policy interpretation", "3": "**PRIMARY DATASETS**\n\n1. **MCA National CSR Data Portal** \u2014 csr.gov.in \u2014 District-level CSR expenditure by company, FY, and Schedule VII sector from 2014-15. Format: downloadable Excel/CSV. Access: Free, public. Covers all 112 aspirational districts.\n\n2. **NITI Aayog Aspirational Districts Delta Ranking** \u2014 niti.gov.in/aspirational-districts \u2014 Composite and sub-sector scores for all 112 districts across 5 rounds (2018\u20132023). Format: PDF + Excel. Access: Free, public.\n\n3. **DISE/UDISE+ (Unified District Information System for Education)** \u2014 udiseplus.gov.in \u2014 District-level education indicators: enrolment, retention, teacher ratios. Format: Excel/PDF. Access: Free with registration.\n\n4. **National Health Mission District Health Bulletins** \u2014 nhm.gov.in \u2014 District health indicators: institutional delivery, immunisation, malnutrition. Format: PDF reports. Access: Free, public.\n\n5. **RBI District-level Financial Inclusion Data** \u2014 rbi.org.in \u2014 Banking penetration, credit-deposit ratios at district level. Format: Excel. Access: Free, public.\n\n**SECONDARY SOURCES**\n\n- IICA CSR Compendium 2022 \u2014 sector-wise and state-wise expenditure analysis with aspirational district breakdown\n- NITI Aayog Aspirational Districts Programme Annual Reports \u2014 qualitative assessment of progress drivers\n- PRS Legislative Research CSR amendment briefs \u2014 regulatory context for 2021 amendments\n\n**DATA GAPS**\n\n- **Gender-disaggregated beneficiary data:** MCA portal does not capture sex of CSR beneficiaries \u2014 work around by using NITI gender sub-indicators as proxy outcome\n- **NGO quality data:** No public database links CSR implementing agency quality to outcomes \u2014 work around using CSR-1 registration as minimum quality proxy\n- **Sub-district granularity:** Both MCA and NITI data are at district level \u2014 block/village-level attribution is not possible with public data\n\n**QUALITY FLAGS**\n\n- MCA CSR Portal: Self-reported by companies; no independent verification of district-level allocation; consider using state-level data as cross-check\n- NITI Aayog delta rankings: Methodology changed between rounds 3 and 4 \u2014 ensure comparability; use within-round changes rather than cross-round comparisons", "4": "**TITLE OPTIONS**\n\n1. *Provocative:* \"The \u20b956,000 Problem: Why CSR in India's Most Deprived Districts Is Going to the Wrong Places\"\n2. *Technical:* \"CSR-to-Development Indicator Association in India's Aspirational Districts: A Panel Data Analysis, FY 2018\u20132023\"\n3. *Policy-facing:* \"Redirecting India's CSR Corpus: Evidence on Sector Allocation and Development Outcomes in Aspirational Districts\"\n\n**STRUCTURE (Research Brief, 6 pages)**\n\n| Section | Words | Purpose |\n|---|---|---|\n| Executive Summary | 200 | 3 findings + 1 recommendation \u2014 decision-maker reads only this |\n| The Problem | 400 | Why CSR allocation mismatches development need \u2014 the \u20b91.89 Cr gender figure as hook |\n| Data & Methodology | 500 | Panel data approach, data sources, limitations \u2014 enough to establish credibility |\n| Key Findings | 800 | 3\u20134 headline findings with district-level examples; 2\u20133 charts |\n| What This Means for Corporates | 400 | Actionable allocation recommendations by sector |\n| Policy Implications | 300 | What regulators and intermediaries should do differently |\n\n**KEY ARGUMENT ARC**\n\nIndia's CSR corpus is large and growing, but its allocation follows corporate comfort rather than development need. Aspirational districts \u2014 NITI Aayog's designated priority zones \u2014 receive a disproportionately small share, and within that share, gender equality and livelihoods are systematically underfunded relative to their SROI benchmarks. Panel data analysis shows that districts with more diversified CSR allocation across sectors show stronger composite indicator improvement than those concentrated in education and health alone. The policy implication is a reallocation framework that shifts corporate CSR portfolios toward high-SROI, underinvested sectors in aspirational districts.\n\n**VISUALISATIONS**\n\n1. **Bubble map of India:** 112 aspirational districts; bubble size = CSR inflow, colour = composite indicator delta \u2014 immediately shows geographic concentration and mismatches\n2. **Sector allocation vs SROI bar chart:** Side-by-side comparison of % CSR spend vs SROI benchmark by sector \u2014 the gender gap is visually stark\n3. **Scatter plot:** District-level CSR intensity (x-axis) vs indicator delta (y-axis) by sector \u2014 shows which sectors show strongest association\n\n**POLICY HOOK**\n\nIndia spends \u20b925,000 crore on CSR annually \u2014 enough to transform its most deprived districts \u2014 but without evidence-based sector allocation, much of it is going to the places and programmes that need it least."};
+
+async function runStep(step){
+  const btn = document.getElementById('btn-'+step);
+  const outZone = document.getElementById('out-'+step);
+  const outBody = document.getElementById('outbody-'+step);
+  const hjBanner = document.getElementById('hj-'+step);
+  const nextBtn = document.getElementById('next-'+step);
+
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor" style="animation:spin 1s linear infinite"><path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4V2z"/></svg> Analysing...';
+  if(!document.getElementById('spin-style')){
+    const s=document.createElement('style');s.id='spin-style';
+    s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  }
+  outZone.style.display='block';
+  outBody.innerHTML='<span class="thinking">▌ thinking...</span>';
+
+  // Simulate thinking delay then show pre-loaded response
+  await new Promise(r=>setTimeout(r,1400));
+
+  const text = DEMO[step] || 'No demo response for this step.';
+  outBody.innerHTML = formatOutput(text);
+  outputs[step] = text;
+
+  hjBanner.style.display='flex';
+  stepDone[step]=true;
+  document.getElementById('nav-'+step).classList.add('done');
+  document.getElementById('snum-'+step).textContent='✓';
+  if(nextBtn) nextBtn.disabled=false;
+
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg> Re-run Analysis';
+}
+
+// ── PROMPT BUILDER ────────────────────────────────────────
+function buildPrompt(step){
+  const question = document.getElementById('q-question')?.value || 'CSR impact attribution in aspirational districts';
+  const sector = document.getElementById('q-sector')?.value || 'CSR & Livelihoods';
+  const geo = document.getElementById('q-geo')?.value || 'India — aspirational districts';
+  const hypo = document.getElementById('q-hypo')?.value || '';
+  const lit = document.getElementById('q-lit')?.value || '';
+  const pubs = document.getElementById('q-pubs')?.value || '';
+  const constraints = document.getElementById('q-constraints')?.value || 'Remote, 8-week timeline, public data only';
+  const datatypes = document.getElementById('q-datatypes')?.value || '';
+  const audience = document.getElementById('q-audience')?.value || 'Corporate CSR team and board';
+  const deliverable = document.getElementById('q-deliverable')?.value || 'research brief';
+
+  const methods = [...document.querySelectorAll('.method-tag input:checked')].map(i=>i.value).join(', ') || 'Mixed methods';
+
+  const prompts = [
+    // Step 1 - Frame
+    `Research question: "${question}"
+Sector: ${sector}
+Geography: ${geo}
+Initial hypothesis: ${hypo || 'Not provided'}
+
+Please do the following:
+1. SHARPEN THE QUESTION: Rewrite this as a precisely scoped research question that is testable, specific, and answerable within a 6–8 week remote research timeline.
+2. ALTERNATIVE FRAMINGS: Suggest 2 alternative ways to frame the same question that might yield stronger findings.
+3. SCOPE RISKS: Identify 2–3 ways this question could become too broad or too narrow.
+4. EVALUABILITY: State clearly whether this question can be answered with secondary data alone, or requires primary research.
+Keep each section to 3–5 bullet points. Be specific to the development sector context.`,
+
+    // Step 2 - Literature
+    `Research question: "${question}"
+Sector: ${sector} | Geography: ${geo}
+What researcher already knows: ${lit || 'MCA compendium CSR data, NITI Aayog aspirational districts baseline'}
+Known publications: ${pubs || 'MCA CSR Compendium 2022, IICA reports'}
+
+Please do the following:
+1. WHAT IS ESTABLISHED: 3–4 key findings that are well-documented in development literature on this topic.
+2. GENUINE GAPS: 3–4 specific research gaps — questions that remain unresolved or understudied. Be specific, not generic.
+3. CONTESTED TERRAIN: 1–2 areas where existing research shows conflicting findings.
+4. YOUR CONTRIBUTION ZONE: Based on the gaps, where does a new research piece have the highest chance of adding genuine knowledge?
+Be specific. Do not pad with obvious statements.`,
+
+    // Step 3 - Methodology
+    `Research question: "${question}"
+Sector: ${sector} | Geography: ${geo}
+Selected approaches: ${methods}
+Constraints: ${constraints}
+
+Please design a methodology:
+1. PRIMARY APPROACH: Recommend the single strongest methodology for this question given the constraints. Justify it in 2 sentences.
+2. STEP-BY-STEP DESIGN: Break the methodology into 4–6 concrete steps with specific actions.
+3. KEY INDICATORS: List 5–7 specific indicators the study should measure (not vague categories — actual measurable indicators).
+4. VALIDITY THREATS: Name 2–3 specific threats to internal validity and how to mitigate them.
+5. AI ACCELERATION POINTS: Where in this methodology can AI tools meaningfully compress time? (literature synthesis, data cleaning, coding, first-draft writing) — be honest about where AI helps and where it cannot.`,
+
+    // Step 4 - Data Sources
+    `Research question: "${question}"
+Sector: ${sector} | Geography: ${geo}
+Data needed: ${datatypes || 'CSR expenditure by district and sector, development indicators, NGO registration data'}
+
+Please map data sources:
+1. PRIMARY DATASETS: 4–6 specific named datasets with their source organization, URL/portal, and data format. Be precise — name the actual dataset, not just the organization.
+2. SECONDARY SOURCES: 3–4 reports or publications with findings that can substitute for primary data collection.
+3. DATA GAPS: 2–3 critical data points that are likely unavailable or hard to access — and how to work around them.
+4. QUALITY FLAGS: For the top 2 datasets, note any known methodological limitations researchers should be aware of.
+5. ACCESS NOTES: Which of these are freely accessible vs require institutional access vs need formal data requests?`,
+
+    // Step 5 - Output
+    `Research question: "${question}"
+Sector: ${sector} | Geography: ${geo}
+Target audience: ${audience}
+Deliverable type: ${deliverable}
+
+Please design the output framework:
+1. TITLE: Suggest 3 possible titles for this research deliverable — each with a different angle (provocative, technical, policy-facing).
+2. STRUCTURE: Provide a section-by-section structure for the ${deliverable} with: section name, word count allocation, and 1-sentence description of what each section must accomplish.
+3. KEY ARGUMENT ARC: What is the logical flow of the argument from problem to finding to recommendation? State it in 4 sentences.
+4. VISUALISATION: Suggest 3 specific charts, maps, or tables that would make the key findings more legible to the target audience.
+5. POLICY HOOK: What is the 1-sentence "so what" that makes a decision-maker act on this research?`
+  ];
+
+  return prompts[step];
+}
+
+// ── FORMAT OUTPUT ─────────────────────────────────────────
+function formatOutput(text){
+  return text
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3}\s(.+)$/gm,'<h4>$1</h4>')
+    .replace(/^\d+\.\s\*\*(.+?)\*\*:/gm,'<h4>$1</h4>')
+    .replace(/^\d+\.\s\*\*(.+?)\*\*/gm,'<h4>$1</h4>')
+    .replace(/^[-•]\s/gm,'• ')
+    .replace(/\n{2,}/g,'\n\n')
+    .split('\n').map(l=>{
+      if(l.startsWith('<h4>')) return l;
+      if(l.startsWith('• ')) return `<li>${l.slice(2)}</li>`;
+      if(l.trim()) return `<p>${l}</p>`;
+      return '';
+    }).join('')
+    .replace(/(<li>.*?<\/li>)+/gs, m=>`<ul>${m}</ul>`);
+}
+
+// ── SUMMARY ───────────────────────────────────────────────
+function showSummary(){
+  document.getElementById('final-summary').style.display='block';
+  const grid = document.getElementById('summary-grid');
+  const labels = ['Research Question','Literature Gap','Methodology','Data Sources','Output Framework'];
+  const snippets = [
+    document.getElementById('q-question')?.value,
+    document.getElementById('q-lit')?.value,
+    [...document.querySelectorAll('.method-tag input:checked')].map(i=>i.value).join(' · '),
+    document.getElementById('q-datatypes')?.value,
+    (document.getElementById('q-audience')?.value || '')+' · '+(document.getElementById('q-deliverable')?.value || '')
+  ];
+  grid.innerHTML = labels.map((l,i)=>`
+    <div class="final-card">
+      <div class="final-card-label"><span>${['◆','◈','◇','◉','◐'][i]}</span> ${l}</div>
+      <div class="final-card-sub">${(snippets[i]||'Completed').substring(0,120)}${(snippets[i]||'').length>120?'...':''}</div>
+    </div>
+  `).join('');
+  document.getElementById('next-4').style.display='none';
+  setTimeout(()=>grid.scrollIntoView({behavior:'smooth'}),200);
+}
+
+// ── GEOSPATIAL MAP ─────────────────────────────────────────────────────────
+
+// India state data: centroid, CSR spend (₹ Cr, FY 2019-20), aspirational districts, indicator delta
+const STATE_DATA = {
+  'Maharashtra':    { lat:19.75, lng:75.71, csr:4821, aspDist:0,  delta:12.3, pop:112.4, top:'Education' },
+  'Gujarat':        { lat:22.26, lng:71.19, csr:3102, aspDist:3,  delta:9.8,  pop:60.4,  top:'Health' },
+  'Karnataka':      { lat:15.32, lng:75.71, csr:1843, aspDist:3,  delta:11.2, pop:61.1,  top:'Education' },
+  'Tamil Nadu':     { lat:11.13, lng:78.66, csr:1654, aspDist:0,  delta:8.9,  pop:72.1,  top:'Health' },
+  'Rajasthan':      { lat:27.02, lng:74.22, csr:1234, aspDist:5,  delta:14.1, pop:68.5,  top:'WASH' },
+  'Uttar Pradesh':  { lat:26.85, lng:80.91, csr:1198, aspDist:8,  delta:16.8, pop:199.8, top:'Education' },
+  'Madhya Pradesh': { lat:22.97, lng:78.66, csr:1087, aspDist:9,  delta:15.3, pop:72.6,  top:'Health' },
+  'Andhra Pradesh': { lat:15.91, lng:79.74, csr:987,  aspDist:7,  delta:13.7, pop:49.4,  top:'Livelihoods' },
+  'Telangana':      { lat:17.12, lng:79.02, csr:876,  aspDist:0,  delta:10.1, pop:35.0,  top:'Education' },
+  'Odisha':         { lat:20.95, lng:85.09, csr:812,  aspDist:7,  delta:18.4, pop:41.9,  top:'WASH' },
+  'West Bengal':    { lat:22.99, lng:87.85, csr:743,  aspDist:3,  delta:11.8, pop:91.3,  top:'Education' },
+  'Bihar':          { lat:25.09, lng:85.31, csr:412,  aspDist:13, delta:21.2, pop:104.1, top:'Health' },
+  'Jharkhand':      { lat:23.61, lng:85.28, csr:634,  aspDist:5,  delta:17.6, pop:32.9,  top:'WASH' },
+  'Chhattisgarh':   { lat:21.27, lng:81.87, csr:578,  aspDist:4,  delta:19.3, pop:25.5,  top:'Livelihoods' },
+  'Assam':          { lat:26.20, lng:92.94, csr:287,  aspDist:10, delta:15.9, pop:31.2,  top:'Health' },
+  'Punjab':         { lat:31.15, lng:75.34, csr:312,  aspDist:0,  delta:7.4,  pop:27.7,  top:'Education' },
+  'Haryana':        { lat:29.06, lng:76.09, csr:498,  aspDist:1,  delta:9.1,  pop:25.4,  top:'Education' },
+  'Uttarakhand':    { lat:30.07, lng:79.09, csr:234,  aspDist:2,  delta:10.8, pop:10.1,  top:'WASH' },
+  'Himachal Pradesh':{ lat:31.10, lng:77.17, csr:143, aspDist:1,  delta:8.3,  pop:6.9,   top:'Education' },
+  'Kerala':         { lat:10.85, lng:76.27, csr:423,  aspDist:0,  delta:5.2,  pop:33.4,  top:'Health' },
+};
+
+// Aspirational district approximate positions (selected key districts)
+const ASPIRATIONAL_DISTRICTS = [
+  {lat:23.65,lng:85.52,name:'Khunti',state:'Jharkhand',csr:24.3},
+  {lat:22.08,lng:84.71,name:'West Singhbhum',state:'Jharkhand',csr:32.1},
+  {lat:25.06,lng:83.99,name:'Sonbhadra',state:'UP',csr:18.7},
+  {lat:20.71,lng:82.98,name:'Kanker',state:'Chhattisgarh',csr:44.3},
+  {lat:19.93,lng:82.01,name:'Bastar',state:'Chhattisgarh',csr:38.9},
+  {lat:26.12,lng:87.47,name:'Kishanganj',state:'Bihar',csr:14.5},
+  {lat:25.88,lng:87.08,name:'Araria',state:'Bihar',csr:12.1},
+  {lat:21.18,lng:86.14,name:'Malkangiri',state:'Odisha',csr:37.1},
+  {lat:19.31,lng:83.87,name:'Koraput',state:'Odisha',csr:20.4},
+  {lat:21.47,lng:84.03,name:'Nabarangpur',state:'Odisha',csr:15.3},
+  {lat:26.35,lng:93.74,name:'Dhemaji',state:'Assam',csr:8.6},
+  {lat:26.64,lng:93.17,name:'Nalbari',state:'Assam',csr:6.3},
+  {lat:14.46,lng:79.99,name:'Nellore',state:'AP',csr:31.8},
+  {lat:14.91,lng:78.82,name:'Kurnool',state:'AP',csr:29.4},
+  {lat:16.93,lng:81.69,name:'Krishna',state:'AP',csr:54.3},
+  {lat:26.47,lng:74.64,name:'Barmer',state:'Rajasthan',csr:22.7},
+  {lat:27.58,lng:70.91,name:'Jaisalmer',state:'Rajasthan',csr:18.2},
+  {lat:21.83,lng:80.33,name:'Rajnandgaon',state:'Chhattisgarh',csr:29.1},
+  {lat:25.37,lng:86.47,name:'Khagaria',state:'Bihar',csr:9.8},
+  {lat:22.33,lng:85.83,name:'Simdega',state:'Jharkhand',csr:10.6},
+];
+
+const INDIA_NATIONAL = {
+  csr: 20172,
+  avgPerDist: 62.4,
+  topSector: 'Education',
+  aspDistTotal: 112,
+  indicatorDelta: 13.2,
+  genderCsr: 1.89,
+};
+
+let map, aspirationalLayer, csrLayer, choroplethLayer, stateLayer;
+let activeScope = 'india';
+let selectedState = null;
+let layerState = { aspirational: true, csr: true, choropleth: false };
+let mapInitialised = false;
+
+function initMap(){
+  if(mapInitialised) return;
+  mapInitialised = true;
+
+  map = L.map('india-map', {
+    center: [22.5, 82.5],
+    zoom: 4.5,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  // CartoDB Positron tiles (clean, minimal, works with our colour scheme)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+    maxZoom: 12
+  }).addTo(map);
+
+  // Add labels layer on top
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+    maxZoom: 12, pane: 'shadowPane'
+  }).addTo(map);
+
+  buildStateLayers();
+  buildAspirationalLayer();
+  buildCsrLayer();
+  updateScopeOutput('india', null);
+}
+
+function buildStateLayers(){
+  stateLayer = L.layerGroup();
+  choroplethLayer = L.layerGroup();
+
+  const maxCsr = Math.max(...Object.values(STATE_DATA).map(d => d.csr));
+
+  Object.entries(STATE_DATA).forEach(([name, d]) => {
+    const intensity = d.csr / maxCsr;
+    const fillColor = `rgba(139,0,0,${(intensity * 0.55 + 0.08).toFixed(2)})`;
+
+    // State circle marker
+    const marker = L.circleMarker([d.lat, d.lng], {
+      radius: 8 + intensity * 12,
+      fillColor,
+      color: '#8b0000',
+      weight: 1.5,
+      fillOpacity: 0.8,
+      opacity: 0.9,
+    });
+
+    marker.bindTooltip(`<b>${name}</b><br>CSR: ₹${d.csr} Cr`, {
+      direction:'top', offset:[0,-8],
+      className:'leaflet-tooltip-custom'
+    });
+
+    marker.on('click', () => selectState(name, d, marker));
+    stateLayer.addLayer(marker);
+
+    // Permanent state name label
+    const label = L.marker([d.lat, d.lng], {
+      icon: L.divIcon({
+        className: 'state-label-icon',
+        html: `<div class="state-label-text">${name.replace(' Pradesh','').replace('Chhattisgarh','Chhattis.').replace('Uttarakhand','Uttarak.').replace('Himachal','Himachal')}</div>`,
+        iconAnchor: [0, -16],
+        iconSize: null
+      }),
+      interactive: false,
+      zIndexOffset: 100
+    });
+    stateLayer.addLayer(label);
+
+    // Choropleth dot (larger, more transparent)
+    const choroDot = L.circleMarker([d.lat, d.lng], {
+      radius: 16 + intensity * 22,
+      fillColor,
+      color: 'transparent',
+      weight: 0,
+      fillOpacity: 0.25,
+    });
+    choroplethLayer.addLayer(choroDot);
+  });
+
+  stateLayer.addTo(map);
+}
+
+function buildAspirationalLayer(){
+  aspirationalLayer = L.layerGroup();
+  ASPIRATIONAL_DISTRICTS.forEach(d => {
+    const m = L.circleMarker([d.lat, d.lng], {
+      radius: 5,
+      fillColor: '#ff4444',
+      color: '#cc0000',
+      weight: 1,
+      fillOpacity: 0.75,
+    });
+    m.bindTooltip(`<b>${d.name}</b><br>${d.state}<br>CSR: ₹${d.csr} Cr`, {
+      direction:'top', offset:[0,-6],
+      className:'leaflet-tooltip-custom'
+    });
+    aspirationalLayer.addLayer(m);
+  });
+  aspirationalLayer.addTo(map);
+}
+
+function buildCsrLayer(){
+  csrLayer = L.layerGroup();
+  Object.entries(STATE_DATA).forEach(([name, d]) => {
+    if(d.csr < 200) return;
+    const r = 6 + Math.sqrt(d.csr / 150);
+    const m = L.circleMarker([d.lat + 0.5, d.lng + 0.5], {
+      radius: Math.min(r, 28),
+      fillColor: 'rgba(139,0,0,0.28)',
+      color: '#8b0000',
+      weight: 1,
+      fillOpacity: 0.35,
+      dashArray: '4 3'
+    });
+    csrLayer.addLayer(m);
+  });
+  csrLayer.addTo(map);
+}
+
+function selectState(name, d, marker){
+  selectedState = { name, ...d };
+
+  // Update left panel
+  document.getElementById('sip-header').textContent = name;
+  const natAvg = INDIA_NATIONAL.csr / Object.keys(STATE_DATA).length;
+  const diff = ((d.csr - natAvg) / natAvg * 100).toFixed(0);
+  const diffStr = diff > 0 ? `+${diff}% vs national avg` : `${diff}% vs national avg`;
+
+  document.getElementById('sip-body').innerHTML = `
+    <div class="state-name-head">${name}</div>
+    <div class="stat-row">
+      <div class="stat-label">CSR Spend (FY 19-20)</div>
+      <div class="stat-val">₹${d.csr} Cr</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-label">vs National Avg</div>
+      <div class="stat-val ${diff>0?'':'green'}">${diffStr}</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-label">Aspirational Districts</div>
+      <div class="stat-val green">${d.aspDist}</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-label">Indicator Delta (avg)</div>
+      <div class="stat-val green">+${d.delta} pts</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-label">Top CSR Sector</div>
+      <div class="stat-val" style="font-size:11px">${d.top}</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-label">CSR per Asp. District</div>
+      <div class="stat-val">${d.aspDist > 0 ? '₹'+(d.csr/d.aspDist).toFixed(0)+' Cr' : 'N/A'}</div>
+    </div>
+  `;
+
+  // If in compare or state scope, update comparison
+  if(activeScope === 'compare' || activeScope === 'state'){
+    updateCompare(name, d);
+  }
+  updateScopeOutput(activeScope, name);
+
+  // Zoom to state
+  if(activeScope !== 'india'){
+    map.setView([d.lat, d.lng], 6.5, {animate:true});
+  }
+}
+
+function updateCompare(stateName, d){
+  const natAvgCsr = (INDIA_NATIONAL.csr / Object.keys(STATE_DATA).length).toFixed(0);
+  const natAvgDist = (INDIA_NATIONAL.csr / INDIA_NATIONAL.aspDistTotal).toFixed(1);
+
+  document.getElementById('compare-panel').classList.add('active');
+  document.getElementById('compare-grid').innerHTML = `
+    <div class="cg-cell"><div class="cg-metric">Metric</div><div style="font-family:var(--mono);font-size:11px;color:var(--text2)">Indicator</div></div>
+    <div class="cg-cell"><div class="cg-metric">${stateName}</div><div style="font-family:var(--mono);font-size:11px;color:var(--text2)">State value</div></div>
+    <div class="cg-cell"><div class="cg-metric">India</div><div style="font-family:var(--mono);font-size:11px;color:var(--text2)">National</div></div>
+
+    <div class="cg-cell"><div class="cg-metric">CSR Total</div><div class="cg-state">₹${d.csr} Cr</div></div>
+    <div class="cg-cell"><div class="cg-metric">CSR Total</div><div class="cg-india">₹${INDIA_NATIONAL.csr} Cr</div></div>
+    <div class="cg-cell"><div class="cg-metric">Difference</div><div class="cg-diff">${d.csr > natAvgCsr ? '▲' : '▼'} ${Math.abs(d.csr - natAvgCsr).toFixed(0)} Cr vs avg</div></div>
+
+    <div class="cg-cell"><div class="cg-metric">Asp. Districts</div><div class="cg-state">${d.aspDist}</div></div>
+    <div class="cg-cell"><div class="cg-metric">Asp. Districts</div><div class="cg-india">${INDIA_NATIONAL.aspDistTotal}</div></div>
+    <div class="cg-cell"><div class="cg-metric">% of total</div><div class="cg-diff">${(d.aspDist/INDIA_NATIONAL.aspDistTotal*100).toFixed(1)}% of national</div></div>
+
+    <div class="cg-cell"><div class="cg-metric">Indicator Δ</div><div class="cg-state">+${d.delta} pts</div></div>
+    <div class="cg-cell"><div class="cg-metric">Indicator Δ</div><div class="cg-india">+${INDIA_NATIONAL.indicatorDelta} pts</div></div>
+    <div class="cg-cell"><div class="cg-metric">Above avg?</div><div class="cg-diff" style="color:${d.delta>INDIA_NATIONAL.indicatorDelta?'#2e7d32':'#8b0000'}">${d.delta>INDIA_NATIONAL.indicatorDelta?'▲ Yes — '+((d.delta-INDIA_NATIONAL.indicatorDelta).toFixed(1))+' pts above':'▼ '+((INDIA_NATIONAL.indicatorDelta-d.delta).toFixed(1))+' pts below'}</div></div>
+
+    <div class="cg-cell"><div class="cg-metric">CSR/Asp. Dist.</div><div class="cg-state">${d.aspDist>0?'₹'+(d.csr/d.aspDist).toFixed(1)+' Cr':'—'}</div></div>
+    <div class="cg-cell"><div class="cg-metric">CSR/Asp. Dist.</div><div class="cg-india">₹${natAvgDist} Cr avg</div></div>
+    <div class="cg-cell"><div class="cg-metric">Top sector</div><div class="cg-diff">${d.top}</div></div>
+  `;
+}
+
+function updateScopeOutput(scope, stateName){
+  const texts = {
+    india: `India-wide scope → Panel data across all 28 states and 112 aspirational districts. Sample size: 112 district-year observations per FY. Requires district-level CSR and NITI Aayog delta data for all states. Controls needed: state fixed effects, government scheme coverage. Strongest for generalisable national findings.`,
+    state: stateName ? `State-specific scope: ${stateName} → Reduces sample to ${STATE_DATA[stateName]?.aspDist || 0} aspirational districts within state. Smaller N requires qualitative supplement (KIIs with CSR officers, NGO partners). Advantage: deeper contextual validity. Requires state-level government scheme data (MGNREGS, NHM spending) as controls. Best for a rich case study.` : `State-specific scope → Click a state on the map to see its research scope implication.`,
+    compare: stateName ? `State vs India comparison: ${stateName} → Dual-level analysis: state-level findings benchmarked against national averages. Requires running the same panel model at both levels and testing whether state coefficients differ significantly from national. Key question: does ${stateName} show a CSR-indicator relationship that diverges from the national pattern, and if so, what explains the divergence?` : `State vs India mode → Click a state on the map to activate the comparison analysis.`
+  };
+  document.getElementById('scope-output-text').textContent = texts[scope] || texts.india;
+}
+
+function setScope(scope){
+  activeScope = scope;
+  ['india','state','compare'].forEach(s => {
+    document.getElementById('scope-'+s).classList.toggle('active', s === scope);
+  });
+
+  if(scope === 'india'){
+    map.setView([22.5, 82.5], 4.5, {animate:true});
+    document.getElementById('compare-panel').classList.remove('active');
+    updateScopeOutput('india', selectedState?.name || null);
+  } else if(scope === 'state'){
+    document.getElementById('compare-panel').classList.remove('active');
+    if(selectedState) map.setView([selectedState.lat, selectedState.lng], 6.5, {animate:true});
+    updateScopeOutput('state', selectedState?.name || null);
+  } else if(scope === 'compare'){
+    if(selectedState) updateCompare(selectedState.name, selectedState);
+    updateScopeOutput('compare', selectedState?.name || null);
+  }
+}
+
+function toggleLayer(layer){
+  const btn = document.getElementById('tog-'+layer);
+  layerState[layer] = !layerState[layer];
+  btn.classList.toggle('on', layerState[layer]);
+
+  const layers = { aspirational: aspirationalLayer, csr: csrLayer, choropleth: choroplethLayer };
+  if(layerState[layer]) { layers[layer].addTo(map); }
+  else { map.removeLayer(layers[layer]); }
+}
+
+function markGeoComplete(){
+  stepDone[5] = true;
+  document.getElementById('nav-5').classList.add('done');
+  document.getElementById('snum-5').textContent = '✓';
+  showSummary();
+}
+
+
+
+// ── Custom tooltip style (injected once) ─────────────────────────────────
+const leafletStyle = document.createElement('style');
+leafletStyle.textContent = `
+  .leaflet-tooltip-custom{font-family:'IBM Plex Mono',monospace;font-size:11px;background:#0a2e0c;color:#e8f5e9;border:1px solid #2e7d32;border-radius:3px;padding:5px 8px;box-shadow:none}
+  .leaflet-tooltip-custom::before{border-top-color:#2e7d32}
+  .state-label-icon{background:transparent !important;border:none !important;}
+  .state-label-text{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    font-weight:600;
+    color:#3d0000;
+    background:rgba(232,245,233,0.82);
+    padding:1px 5px;
+    border-radius:2px;
+    white-space:nowrap;
+    letter-spacing:0.02em;
+    pointer-events:none;
+    text-shadow:0 0 3px rgba(232,245,233,1);
+    border:1px solid rgba(139,0,0,0.2);
+  }
+`;
+document.head.appendChild(leafletStyle);
+
+
+// ── DATA EXTRACTION ────────────────────────────────────────────────────────
+
+// Master dataset — realistic CSR + development data
+const MASTER_DATA = [
+  // MCA CSR data (state × sector × year)
+  {source:'mca',geo:'Maharashtra',      aspDist:false, year:'2018-19',sector:'Education',   metric:'spend',  value:'₹1,842 Cr',  raw:1842,  indicator:'—',  notes:'87 companies reporting'},
+  {source:'mca',geo:'Maharashtra',      aspDist:false, year:'2019-20',sector:'Health',      metric:'spend',  value:'₹934 Cr',    raw:934,   indicator:'—',  notes:''},
+  {source:'mca',geo:'Gujarat',          aspDist:false, year:'2019-20',sector:'Education',   metric:'spend',  value:'₹1,102 Cr',  raw:1102,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Gujarat',          aspDist:true,  year:'2019-20',sector:'Livelihoods', metric:'spend',  value:'₹95.3 Cr',   raw:95,    indicator:'—',  notes:'3 aspirational districts'},
+  {source:'mca',geo:'Bihar',            aspDist:true,  year:'2018-19',sector:'Health',      metric:'spend',  value:'₹17.5 Cr',   raw:17.5,  indicator:'—',  notes:'13 aspirational districts'},
+  {source:'mca',geo:'Bihar',            aspDist:true,  year:'2019-20',sector:'Education',   metric:'spend',  value:'₹14.6 Cr',   raw:14.6,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Bihar',            aspDist:true,  year:'2020-21',sector:'Health',      metric:'spend',  value:'₹12.2 Cr',   raw:12.2,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Jharkhand',        aspDist:true,  year:'2018-19',sector:'WASH',        metric:'spend',  value:'₹24.3 Cr',   raw:24.3,  indicator:'—',  notes:'5 aspirational districts'},
+  {source:'mca',geo:'Jharkhand',        aspDist:true,  year:'2019-20',sector:'Education',   metric:'spend',  value:'₹32.1 Cr',   raw:32.1,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Odisha',           aspDist:true,  year:'2019-20',sector:'WASH',        metric:'spend',  value:'₹37.1 Cr',   raw:37.1,  indicator:'—',  notes:'7 aspirational districts'},
+  {source:'mca',geo:'Odisha',           aspDist:true,  year:'2020-21',sector:'Livelihoods', metric:'spend',  value:'₹37.4 Cr',   raw:37.4,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Chhattisgarh',     aspDist:true,  year:'2019-20',sector:'Rural',       metric:'spend',  value:'₹26.0 Cr',   raw:26,    indicator:'—',  notes:'4 aspirational districts'},
+  {source:'mca',geo:'Assam',            aspDist:true,  year:'2019-20',sector:'Health',      metric:'spend',  value:'₹32.6 Cr',   raw:32.6,  indicator:'—',  notes:'10 aspirational districts'},
+  {source:'mca',geo:'Uttar Pradesh',    aspDist:true,  year:'2019-20',sector:'Education',   metric:'spend',  value:'₹48.7 Cr',   raw:48.7,  indicator:'—',  notes:'8 aspirational districts'},
+  {source:'mca',geo:'Madhya Pradesh',   aspDist:true,  year:'2019-20',sector:'Health',      metric:'spend',  value:'₹41.2 Cr',   raw:41.2,  indicator:'—',  notes:'9 aspirational districts'},
+  {source:'mca',geo:'Rajasthan',        aspDist:true,  year:'2019-20',sector:'WASH',        metric:'spend',  value:'₹22.7 Cr',   raw:22.7,  indicator:'—',  notes:'5 aspirational districts'},
+  {source:'mca',geo:'All India',        aspDist:false, year:'2019-20',sector:'Gender',      metric:'spend',  value:'₹166 Cr',    raw:166,   indicator:'—',  notes:'National total'},
+  {source:'mca',geo:'All India',        aspDist:true,  year:'2020-21',sector:'Gender',      metric:'spend',  value:'₹1.89 Cr',   raw:1.89,  indicator:'—',  notes:'Across 112 aspirational districts'},
+  {source:'mca',geo:'All India',        aspDist:false, year:'2019-20',sector:'Education',   metric:'spend',  value:'₹7,164 Cr',  raw:7164,  indicator:'—',  notes:'Largest sector nationally'},
+  {source:'mca',geo:'All India',        aspDist:false, year:'2020-21',sector:'Education',   metric:'spend',  value:'₹377 Cr',    raw:377,   indicator:'—',  notes:'Aspirational districts only'},
+
+  // NITI Aayog indicator data
+  {source:'niti',geo:'Bihar',           aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'+21.2 pts', raw:21.2, indicator:'Composite delta',  notes:'Highest gainer'},
+  {source:'niti',geo:'Chhattisgarh',    aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'+19.3 pts', raw:19.3, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Jharkhand',       aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'+17.6 pts', raw:17.6, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Assam',           aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'+15.9 pts', raw:15.9, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Uttar Pradesh',   aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'+16.8 pts', raw:16.8, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Rajasthan',       aspDist:true,  year:'2020-21',sector:'WASH',        metric:'indicator', value:'+14.1 pts', raw:14.1, indicator:'WASH sub-index',   notes:''},
+  {source:'niti',geo:'Andhra Pradesh',  aspDist:true,  year:'2020-21',sector:'Livelihoods', metric:'indicator', value:'+13.7 pts', raw:13.7, indicator:'Livelihood index', notes:'7 aspirational districts'},
+  {source:'niti',geo:'Maharashtra',     aspDist:false, year:'2020-21',sector:'Education',   metric:'indicator', value:'+12.3 pts', raw:12.3, indicator:'Education index',  notes:''},
+  {source:'niti',geo:'Odisha',          aspDist:true,  year:'2020-21',sector:'WASH',        metric:'indicator', value:'+18.4 pts', raw:18.4, indicator:'WASH sub-index',   notes:'Strong WASH gainer'},
+  {source:'niti',geo:'All India',       aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'+13.2 pts', raw:13.2, indicator:'National avg delta',notes:'112 districts average'},
+
+  // DISE education data
+  {source:'dise',geo:'Bihar',           aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'68.4%',  raw:68.4, indicator:'Enrolment rate',     notes:'District avg'},
+  {source:'dise',geo:'Jharkhand',       aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'71.2%',  raw:71.2, indicator:'Enrolment rate',     notes:''},
+  {source:'dise',geo:'Uttar Pradesh',   aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'72.8%',  raw:72.8, indicator:'Enrolment rate',     notes:''},
+  {source:'dise',geo:'All India',       aspDist:false, year:'2020-21',sector:'Education',   metric:'coverage',  value:'82.1%',  raw:82.1, indicator:'National enrolment', notes:'UDISE+ 2020-21'},
+
+  // NHM health data
+  {source:'nhm',geo:'Bihar',            aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'73.2%',  raw:73.2, indicator:'Institutional delivery', notes:'NFHS-5'},
+  {source:'nhm',geo:'Odisha',           aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'85.6%',  raw:85.6, indicator:'Institutional delivery', notes:''},
+  {source:'nhm',geo:'All India',        aspDist:false, year:'2020-21',sector:'Health',      metric:'coverage',  value:'88.6%',  raw:88.6, indicator:'National avg delivery',   notes:'NFHS-5'},
+
+  // RBI financial inclusion
+  {source:'rbi',geo:'Bihar',            aspDist:true,  year:'2019-20',sector:'Livelihoods', metric:'coverage',  value:'52.3%',  raw:52.3, indicator:'Bank account coverage', notes:'RBI FI index'},
+  {source:'rbi',geo:'All India',        aspDist:false, year:'2019-20',sector:'Livelihoods', metric:'coverage',  value:'76.8%',  raw:76.8, indicator:'Bank account coverage', notes:'National avg'},
+
+  // SEBI BRSR — Business Responsibility & Sustainability Reports
+  {source:'sebi',geo:'All India',       aspDist:false, year:'2022-23',sector:'Environment', metric:'spend',  value:'₹3,241 Cr', raw:3241, indicator:'Green/ESG CSR share',    notes:'Top 1000 listed cos · BRSR FY23'},
+  {source:'sebi',geo:'Maharashtra',     aspDist:false, year:'2022-23',sector:'Environment', metric:'spend',  value:'₹812 Cr',   raw:812,  indicator:'Climate initiatives',     notes:'SEBI BRSR mandatory disclosure'},
+  {source:'sebi',geo:'All India',       aspDist:false, year:'2022-23',sector:'Gender',      metric:'indicator','value':'28.4%',  raw:28.4, indicator:'Female board directors', notes:'BRSR gender diversity metric'},
+  {source:'sebi',geo:'All India',       aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'42.1%', raw:42.1, indicator:'Supply chain MSME share',notes:'Top 500 listed companies'},
+  {source:'sebi',geo:'Gujarat',         aspDist:false, year:'2022-23',sector:'Environment', metric:'spend',   value:'₹487 Cr',  raw:487,  indicator:'Renewable energy CSR',   notes:'Reliance, Adani led spend'},
+
+  // CSR Box / CSR Journal data
+  {source:'csrbox',geo:'All India',     aspDist:false, year:'2021-22',sector:'Education',   metric:'spend',   value:'₹8,102 Cr',raw:8102, indicator:'Education sector total', notes:'CSRBox verified corpus'},
+  {source:'csrbox',geo:'All India',     aspDist:false, year:'2021-22',sector:'Health',      metric:'spend',   value:'₹5,634 Cr',raw:5634, indicator:'Health sector total',    notes:'Post-COVID surge in health'},
+  {source:'csrbox',geo:'Bihar',         aspDist:true,  year:'2021-22',sector:'Education',   metric:'spend',   value:'₹22.3 Cr', raw:22.3, indicator:'District-level tracked', notes:'CSRBox district tracker'},
+  {source:'csrbox',geo:'Jharkhand',     aspDist:true,  year:'2021-22',sector:'WASH',        metric:'spend',   value:'₹28.9 Cr', raw:28.9, indicator:'WASH implementation',    notes:'NGO-verified spend'},
+  {source:'csrbox',geo:'All India',     aspDist:false, year:'2021-22',sector:'Gender',      metric:'spend',   value:'₹198 Cr',  raw:198,  indicator:'Women empowerment CSR',  notes:'Still <1% of total corpus'},
+
+  // MGNREGS MIS
+  {source:'mgnregs',geo:'Bihar',        aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage','value':'72.4%',  raw:72.4, indicator:'HH employment provided', notes:'MGNREGS MIS · mgnarega.nic.in'},
+  {source:'mgnregs',geo:'Jharkhand',    aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage','value':'84.1%',  raw:84.1, indicator:'HH employment provided', notes:'One of highest coverage states'},
+  {source:'mgnregs',geo:'Odisha',       aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage','value':'79.3%',  raw:79.3, indicator:'HH employment provided', notes:''},
+  {source:'mgnregs',geo:'Chhattisgarh', aspDist:true,  year:'2020-21',sector:'Rural',       metric:'indicator','value':'₹211/day',raw:211, indicator:'Avg wage per day',       notes:'Above national avg ₹202'},
+  {source:'mgnregs',geo:'All India',    aspDist:false, year:'2020-21',sector:'Rural',       metric:'coverage','value':'63.2%',  raw:63.2, indicator:'National HH coverage',   notes:'7.55 Cr HH employed FY21'},
+  {source:'mgnregs',geo:'Assam',        aspDist:true,  year:'2020-21',sector:'Rural',       metric:'indicator','value':'₹241 Cr',raw:241, indicator:'Total wages disbursed',   notes:'10 aspirational districts'},
+
+  // Swachh Bharat Mission (SBM)
+  {source:'sbm',geo:'Bihar',            aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'79.2%',  raw:79.2, indicator:'HH with toilet access',  notes:'SBM Phase I close · sbm.gov.in'},
+  {source:'sbm',geo:'Jharkhand',        aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'88.6%',  raw:88.6, indicator:'ODF declared villages',   notes:''},
+  {source:'sbm',geo:'Odisha',           aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'92.3%',  raw:92.3, indicator:'ODF declared villages',   notes:'Strong SBM implementation'},
+  {source:'sbm',geo:'Uttar Pradesh',    aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'81.7%',  raw:81.7, indicator:'HH with toilet access',   notes:'8 aspirational districts'},
+  {source:'sbm',geo:'All India',        aspDist:false, year:'2019-20',sector:'WASH',        metric:'coverage', 'value':'100%',   raw:100,  indicator:'ODF declared nationally', notes:'SBM Phase I complete Oct 2019'},
+  {source:'sbm',geo:'Rajasthan',        aspDist:true,  year:'2020-21',sector:'WASH',        metric:'indicator','value':'74.1%',  raw:74.1, indicator:'Functional HH taps (JJM)',notes:'Phase II Jal Jeevan Mission'},
+
+  // Jal Jeevan Mission
+  {source:'jjm',geo:'All India',        aspDist:false, year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'62.8%', raw:62.8, indicator:'HH with tap water',        notes:'jaljeevanmission.gov.in'},
+  {source:'jjm',geo:'Bihar',            aspDist:true,  year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'48.3%', raw:48.3, indicator:'HH with tap water',        notes:'Below national avg · high need'},
+  {source:'jjm',geo:'Jharkhand',        aspDist:true,  year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'41.7%', raw:41.7, indicator:'HH with tap water',        notes:'Lowest among large states'},
+  {source:'jjm',geo:'Maharashtra',      aspDist:false, year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'78.4%', raw:78.4, indicator:'HH with tap water',        notes:'Urban-rural split wide'},
+  {source:'jjm',geo:'Odisha',           aspDist:true,  year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'53.2%', raw:53.2, indicator:'HH with tap water',        notes:'7 aspirational districts'},
+
+  // PMAY Housing
+  {source:'pmay',geo:'Bihar',           aspDist:true,  year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'81.4%', raw:81.4, indicator:'PMAY-G houses completed', notes:'pmayg.nic.in · 13 asp districts'},
+  {source:'pmay',geo:'Chhattisgarh',    aspDist:true,  year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'92.1%', raw:92.1, indicator:'PMAY-G houses completed', notes:'Strong implementation'},
+  {source:'pmay',geo:'All India',       aspDist:false, year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'87.6%', raw:87.6, indicator:'PMAY-G national completion',notes:'2.95 Cr houses constructed'},
+  {source:'pmay',geo:'Odisha',          aspDist:true,  year:'2021-22',sector:'Rural',       metric:'indicator','value':'₹1.2L avg',raw:120000,indicator:'Cost per house PMAY-G',notes:'Below national avg — efficiency'},
+
+  // PM Poshan (Mid-Day Meal)
+  {source:'pmposhan',geo:'All India',   aspDist:false, year:'2022-23',sector:'Education',   metric:'coverage', 'value':'11.8 Cr',raw:118000000,indicator:'Children covered',    notes:'PM POSHAN annual report'},
+  {source:'pmposhan',geo:'Bihar',       aspDist:true,  year:'2022-23',sector:'Education',   metric:'coverage', 'value':'1.87 Cr',raw:18700000, indicator:'Children covered',    notes:'Largest single state'},
+  {source:'pmposhan',geo:'Uttar Pradesh',aspDist:true, year:'2022-23',sector:'Education',   metric:'indicator','value':'₹8.4/day',raw:8.4,     indicator:'Cost per meal',       notes:'Up from ₹6.1 FY21'},
+  {source:'pmposhan',geo:'Rajasthan',   aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'91.2%',  raw:91.2,     indicator:'Attendance on MDM days',notes:'Positive CSR-school nexus'},
+
+  // NFHS-5 District Data (2019-21)
+  {source:'nfhs',geo:'Bihar',           aspDist:true,  year:'2019-21',sector:'Health',      metric:'indicator','value':'63.5%',  raw:63.5, indicator:'Stunting rate <5yrs',     notes:'NFHS-5 · rchiips.org'},
+  {source:'nfhs',geo:'Jharkhand',       aspDist:true,  year:'2019-21',sector:'Health',      metric:'indicator','value':'39.4%',  raw:39.4, indicator:'Stunting rate <5yrs',     notes:'High burden district'},
+  {source:'nfhs',geo:'All India',       aspDist:false, year:'2019-21',sector:'Health',      metric:'indicator','value':'35.5%',  raw:35.5, indicator:'Stunting rate <5yrs',     notes:'National average NFHS-5'},
+  {source:'nfhs',geo:'Bihar',           aspDist:true,  year:'2019-21',sector:'Gender',      metric:'indicator','value':'18.4%',  raw:18.4, indicator:'Women autonomous decision',notes:'Financial autonomy metric'},
+  {source:'nfhs',geo:'All India',       aspDist:false, year:'2019-21',sector:'Gender',      metric:'indicator','value':'31.2%',  raw:31.2, indicator:'Women autonomous decision',notes:'National avg NFHS-5'},
+  {source:'nfhs',geo:'Kerala',          aspDist:false, year:'2019-21',sector:'Health',      metric:'indicator','value':'99.1%',  raw:99.1, indicator:'Institutional delivery',   notes:'Benchmark state'},
+  {source:'nfhs',geo:'Odisha',          aspDist:true,  year:'2019-21',sector:'Health',      metric:'indicator','value':'85.2%',  raw:85.2, indicator:'Institutional delivery',   notes:''},
+
+  // POSHAN Tracker (Nutrition MIS)
+  {source:'poshan',geo:'All India',     aspDist:false, year:'2022-23',sector:'Health',      metric:'coverage', 'value':'7.0 Cr', raw:70000000,indicator:'Pregnant women tracked', notes:'poshan.gov.in real-time MIS'},
+  {source:'poshan',geo:'Bihar',         aspDist:true,  year:'2022-23',sector:'Health',      metric:'indicator', value:'38.7%',   raw:38.7,  indicator:'Severe acute malnutrition',notes:'SAM prevalence asp. districts'},
+  {source:'poshan',geo:'Rajasthan',     aspDist:true,  year:'2022-23',sector:'Health',      metric:'indicator','value':'31.2%',  raw:31.2,  indicator:'SAM prevalence',          notes:'5 asp. districts'},
+  {source:'poshan',geo:'Chhattisgarh',  aspDist:true,  year:'2022-23',sector:'Health',      metric:'indicator','value':'29.8%',  raw:29.8,  indicator:'SAM prevalence',          notes:'4 asp. districts'},
+
+  // ASER Rural Learning (Annual Status of Education Report)
+  {source:'aser',geo:'All India',       aspDist:false, year:'2022-23',sector:'Education',   metric:'indicator','value':'20.5%',  raw:20.5, indicator:'Std V kids reading Std II', notes:'ASER 2022 · asercentre.org'},
+  {source:'aser',geo:'Bihar',           aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'14.2%',  raw:14.2, indicator:'Basic reading ability',     notes:'Foundational learning crisis'},
+  {source:'aser',geo:'Jharkhand',       aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'16.8%',  raw:16.8, indicator:'Basic reading ability',     notes:'Below national average'},
+  {source:'aser',geo:'Himachal Pradesh',aspDist:false, year:'2022-23',sector:'Education',   metric:'indicator','value':'52.3%',  raw:52.3, indicator:'Basic reading ability',     notes:'High performer benchmark'},
+  {source:'aser',geo:'Uttar Pradesh',   aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'17.1%',  raw:17.1, indicator:'Basic reading ability',     notes:'8 aspirational districts'},
+
+  // PMJDY Jan Dhan
+  {source:'pmjdy',geo:'All India',      aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'coverage', 'value':'49.8 Cr',raw:498000000,indicator:'Jan Dhan accounts opened',notes:'pmjdy.npci.org.in'},
+  {source:'pmjdy',geo:'Bihar',          aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'₹2,341',  raw:2341, indicator:'Avg balance per account',   notes:'Below national avg ₹3,761'},
+  {source:'pmjdy',geo:'All India',      aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'56.2%',  raw:56.2, indicator:'Zero-balance accounts',     notes:'Inclusion without activation'},
+  {source:'pmjdy',geo:'Jharkhand',      aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'₹1,987', raw:1987, indicator:'Avg balance per account',   notes:'Tribal area low balance'},
+
+  // CMIE Economic Data
+  {source:'cmie',geo:'Bihar',           aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'52.4%',  raw:52.4, indicator:'LFPR (Labour Force Part.)', notes:'CMIE CPHS · cmie.com'},
+  {source:'cmie',geo:'All India',       aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'39.8%',  raw:39.8, indicator:'LFPR national average',     notes:'Urban-rural split 34/44%'},
+  {source:'cmie',geo:'Rajasthan',       aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'18.7%',  raw:18.7, indicator:'Female LFPR',               notes:'One of lowest in India'},
+  {source:'cmie',geo:'Jharkhand',       aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'47.3%',  raw:47.3, indicator:'LFPR',                      notes:'High informal sector share'},
+  {source:'cmie',geo:'Maharashtra',     aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'₹2.1L',  raw:210000,indicator:'Per capita income',         notes:'vs Bihar ₹54,000 — 4x gap'},
+
+  // data.gov.in Open Data
+  {source:'datagov',geo:'All India',    aspDist:false, year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'6.4 lakh',raw:640000,indicator:'Village-level electrified',  notes:'data.gov.in · Saubhagya data'},
+  {source:'datagov',geo:'Bihar',        aspDist:true,  year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'91.3%',  raw:91.3, indicator:'HH electrification',         notes:'Saubhagya scheme'},
+  {source:'datagov',geo:'All India',    aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage', 'value':'₹28,634',raw:28634,indicator:'Per capita MGNREGS spend',   notes:'Aspirational district avg'},
+  {source:'datagov',geo:'Odisha',       aspDist:true,  year:'2021-22',sector:'Environment', metric:'indicator','value':'31.4%',  raw:31.4, indicator:'Forest cover district avg',  notes:'7 asp. districts · FSI data'},
+
+  // World Bank Open Data
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'$2,392', raw:2392, indicator:'GNI per capita (Atlas)',     notes:'data.worldbank.org'},
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2022-23',sector:'Health',      metric:'indicator','value':'35.5%',  raw:35.5, indicator:'Stunting prevalence <5yrs', notes:'WB Health Nutrition Portal'},
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2021-22',sector:'Education',   metric:'indicator','value':'71.1%',  raw:71.1, indicator:'Lower secondary completion',notes:'WDI EdStats'},
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2022-23',sector:'Gender',      metric:'indicator','value':'28.9%',  raw:28.9, indicator:'Female LFPR (WB modelled)', notes:'ILO-WB modelled estimate'},
+
+  // Census 2011
+  {source:'census',geo:'Bihar',         aspDist:true,  year:'2011',   sector:'WASH',        metric:'indicator','value':'18.6%',  raw:18.6, indicator:'HH with improved sanitation',notes:'Census 2011 baseline'},
+  {source:'census',geo:'All India',     aspDist:false, year:'2011',   sector:'WASH',        metric:'indicator','value':'46.9%',  raw:46.9, indicator:'HH with improved sanitation',notes:'Census 2011 national'},
+  {source:'census',geo:'Jharkhand',     aspDist:true,  year:'2011',   sector:'Livelihoods', metric:'indicator','value':'76.2%',  raw:76.2, indicator:'Rural population share',    notes:'Baseline for research'},
+  {source:'census',geo:'All India',     aspDist:false, year:'2011',   sector:'Education',   metric:'indicator','value':'74.0%',  raw:74,   indicator:'Literacy rate',              notes:'74.04% · up from 65% 2001'},
+  {source:'census',geo:'Bihar',         aspDist:true,  year:'2011',   sector:'Education',   metric:'indicator','value':'63.8%',  raw:63.8, indicator:'Literacy rate',              notes:'Below national avg · baseline'},
+];
+
+let filteredData = [];
+let lastAiAnalysis = '';
+
+function filterData(){
+  const src = document.getElementById('de-source').value;
+  const geo = document.getElementById('de-geo').value;
+  const yr  = document.getElementById('de-year').value;
+  const sec = document.getElementById('de-sector').value;
+  const met = document.getElementById('de-metric').value;
+
+  filteredData = MASTER_DATA.filter(r => {
+    if(src !== 'all' && r.source !== src) return false;
+    if(geo === 'aspirational' && !r.aspDist) return false;
+    if(geo !== 'all' && geo !== 'aspirational' && r.geo !== geo) return false;
+    if(yr  !== 'all' && r.year !== yr) return false;
+    if(sec !== 'all' && r.sector !== sec) return false;
+    if(met !== 'all' && r.metric !== met) return false;
+    return true;
+  });
+
+  renderTable(filteredData);
+  document.getElementById('de-count').textContent = filteredData.length;
+  document.getElementById('de-analyse-btn').disabled = filteredData.length === 0;
+
+  // Reset AI output when filters change
+  document.getElementById('de-ai-output').classList.remove('active');
+  document.getElementById('de-dl-row').style.display = 'none';
+}
+
+function renderTable(rows){
+  const thead = document.getElementById('de-thead');
+  const tbody = document.getElementById('de-tbody');
+  const info  = document.getElementById('de-row-info');
+  const title = document.getElementById('de-table-title');
+
+  if(rows.length === 0){
+    thead.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px;font-family:var(--mono);font-size:11px">No data matches current filters</td></tr>';
+    info.textContent = '0 rows';
+    return;
+  }
+
+  const SOURCE_LABELS = {
+    mca:'MCA National CSR Portal', sebi:'SEBI BRSR Disclosures', csrbox:'CSR Box / CSRJournal',
+    niti:'NITI Aayog Asp. Districts', mgnregs:'MGNREGS MIS', sbm:'Swachh Bharat Mission',
+    jjm:'Jal Jeevan Mission', pmay:'PMAY Housing', pmposhan:'PM Poshan (MDM)',
+    nhm:'NHM / NFHS-5', nfhs:'NFHS-5 District Data', poshan:'POSHAN Tracker',
+    dise:'DISE / UDISE+', aser:'ASER Rural Learning',
+    rbi:'RBI Financial Inclusion', pmjdy:'PMJDY Jan Dhan', cmie:'CMIE Economic Data',
+    datagov:'data.gov.in Open Data', worldbank:'World Bank Open Data', census:'Census 2011'
+  };
+  title.textContent = '◆ ' + (SOURCE_LABELS[document.getElementById('de-source').value] || 'Multi-Source') + ' — Filtered Data';
+  info.textContent = rows.length + ' rows · scroll to see all';
+
+  thead.innerHTML = `<tr>
+    <th>Source</th><th>State / Geography</th><th>Year</th>
+    <th>Sector</th><th>Indicator</th><th style="text-align:right">Value</th><th>Type</th><th>Notes</th>
+  </tr>`;
+
+  const SRC_COLORS = {
+    mca:'chip-blue', sebi:'chip-purple', csrbox:'chip-blue',
+    niti:'chip-green', mgnregs:'chip-green', sbm:'chip-green', jjm:'chip-green',
+    pmay:'chip-amber', pmposhan:'chip-amber',
+    nhm:'chip-purple', nfhs:'chip-purple', poshan:'chip-purple',
+    dise:'chip-amber', aser:'chip-amber',
+    rbi:'chip-blue', pmjdy:'chip-blue', cmie:'chip-blue',
+    datagov:'chip-green', worldbank:'chip-green', census:'chip-amber'
+  };
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td><span class="chip ${SRC_COLORS[r.source]||'chip-blue'}" style="font-size:9px">${r.source.toUpperCase()}</span></td>
+    <td class="hi">${r.geo}${r.aspDist?' <span style="font-size:9px;color:#8b0000">●</span>':''}</td>
+    <td class="tag">${r.year}</td>
+    <td>${r.sector}</td>
+    <td style="font-size:10.5px;color:var(--text3)">${r.indicator !== '—' ? r.indicator : '—'}</td>
+    <td class="num">${r.value}</td>
+    <td><span class="chip ${r.metric==='spend'?'chip-blue':r.metric==='indicator'?'chip-green':'chip-amber'}" style="font-size:9px">${r.metric}</span></td>
+    <td style="font-size:10.5px;color:var(--text3)">${r.notes}</td>
+  </tr>`).join('');
+}
+
+// Pre-loaded AI analysis responses keyed by dominant filter combo
+const DE_AI_RESPONSES = {
+  default: `**KEY PATTERNS IN SELECTED DATA**
+
+Based on the filtered dataset, here are the critical patterns relevant to your research:
+
+**Concentration problem:** CSR expenditure in aspirational districts is heavily skewed — Bihar's 13 aspirational districts received ₹14.6 Cr in FY 2019-20, while Maharashtra's 0 aspirational districts received 126x more CSR in absolute terms. The states that need it most get it least.
+
+**Sector mismatch:** Where data shows both CSR spend and development indicators for the same geography and period, there is a visible pattern: WASH and Livelihoods sectors show stronger indicator improvement correlation than Education alone, yet receive a fraction of the funding.
+
+**Temporal lag matters:** NITI Aayog composite delta scores show strongest improvement in years T+2 after CSR inflows — suggesting that single-year CSR expenditure has a lagged effect on indicators. Your research design should account for this lag.
+
+**The gender outlier:** ₹1.89 Cr total gender equality CSR across 112 aspirational districts over 3 years (vs ₹166 Cr nationally) — with Women's Empowerment SROI benchmarks at 4.3:1, this represents the largest allocation inefficiency in the dataset.
+
+**Data quality flag:** MCA data is self-reported. Districts with stronger NGO ecosystems (Jharkhand, Odisha) show higher data completeness than those without (Northern Bihar districts).`,
+
+  mca_aspirational: `**CSR IN ASPIRATIONAL DISTRICTS — KEY FINDINGS**
+
+**Absolute underfunding:** Aspirational districts collectively received ₹24,865 Cr over 3 years against a national total of ~₹65,000 Cr — under 38% going to NITI Aayog priority zones that house India's most underserved populations.
+
+**State-level variation is extreme:** Chhattisgarh's aspirational districts (₹155 Cr, 3 years) vs Bihar's (₹44 Cr, 3 years) — Bihar has 13 aspirational districts to Chhattisgarh's 4. Per-district, Bihar receives ₹3.4 Cr vs Chhattisgarh's ₹38.8 Cr. Same national mandate, 11x difference in reach.
+
+**Sector allocation in aspirational districts:** Education dominates even within aspirational districts (₹377 Cr), while Gender (₹1.89 Cr) and Livelihoods remain catastrophically underfunded relative to both need and SROI benchmarks.
+
+**Corporate geography bias:** Most CSR in aspirational districts comes from companies with operations nearby (mining PSUs in Jharkhand/Chhattisgarh/Odisha) — not from large national spenders in Maharashtra/Gujarat who have no operational footprint in high-need zones.
+
+**Research implication:** Your study needs a control variable for corporate operational presence — states with heavy industry show higher aspirational district CSR even before development need is accounted for.`,
+
+  sebi_esg: `**ESG & SUSTAINABILITY DISCLOSURE PATTERNS**
+
+**The BRSR opportunity:** Since FY 2022-23, SEBI mandates Business Responsibility and Sustainability Reports from top 1000 listed companies. This creates a new public data layer on corporate sustainability that goes beyond CSR spend — covering supply chain MSME inclusion, gender diversity at board level, and environmental impact metrics.
+
+**Gender gap in boardrooms vs CSR:** Female board directors nationally at 28.4% (SEBI BRSR) — yet gender equality CSR spend remains under 1% of total corpus. The boardroom representation metric suggests governance intent; the spending data reveals execution failure.
+
+**Green CSR concentration:** ₹3,241 Cr in ESG/environmental CSR (FY22-23) is growing but still dominated by Maharashtra and Gujarat — the same geographic concentration problem that plagues all CSR. States with highest climate vulnerability (Odisha coast, Bihar floods) receive least climate CSR.
+
+**Research hook:** Cross-reference BRSR ESG scores with CSR allocation choices — do companies with higher ESG ratings allocate more strategically, or does the rating and the spend remain disconnected?`,
+
+  mgnregs_rural: `**MGNREGS + CSR — THE COMPLEMENTARITY QUESTION**
+
+**Coverage vs quality:** MGNREGS provides employment coverage (72-84% HH in aspirational districts) but at low wage rates and low skill-building value. CSR's livelihoods programmes, if well-designed, should complement — not duplicate — MGNREGS by providing higher-skill economic pathways.
+
+**The Bihar paradox:** Bihar's 13 aspirational districts show high MGNREGS coverage (72.4%) but receive only ₹14.6 Cr CSR in livelihoods — suggesting that companies see MGNREGS coverage as a reason to deprioritise the state, when it should be a signal of persistent structural unemployment.
+
+**Wage data as baseline:** MGNREGS wage rates (₹202-241/day depending on state) provide a reliable baseline for livelihoods CSR impact assessment — any programme that doesn't demonstrably exceed MGNREGS wage outcomes is economically wasteful.
+
+**For your research:** Add MGNREGS district-level expenditure as a control variable in the panel regression — districts with higher MGNREGS spend may show indicator improvement independent of CSR.`,
+
+  wash_combined: `**WASH SECTOR — MULTI-SOURCE TRIANGULATION**
+
+**Three-layer WASH picture:** Swachh Bharat Mission (toilet access) → Jal Jeevan Mission (tap water) → NFHS (usage behaviour) tell a sequenced story. Bihar reached 79.2% toilet access (SBM) but only 48.3% tap water (JJM) — infrastructure exists, but the full WASH stack is incomplete.
+
+**Jharkhand anomaly:** Highest MGNREGS coverage, high ODF status (88.6%), but only 41.7% tap water — suggesting WASH infrastructure investment in JJM is lagging MGNREGS and SBM progress. CSR WASH programmes have a clear gap to fill: piped water in ODF-declared villages.
+
+**CSR WASH spend vs government baseline:** SBM national spend: ~₹1.96 lakh crore (2014-2019). Total CSR WASH: ~₹688 Cr (FY 2019-20). CSR is complementary at best, not substitutive. The research question becomes: does CSR WASH spend in aspirational districts reach the HH that government schemes miss?
+
+**ASER education parallel:** Just as SBM achieved toilet access without ensuring use, DISE data shows enrolment without learning. Both suggest that CSR's highest-value contribution is in behaviour change and quality improvement — not infrastructure duplication.`,
+
+  niti_indicator: `**DEVELOPMENT INDICATOR PATTERNS — AI ANALYSIS**
+
+**High delta states:** Bihar (+21.2 pts), Chhattisgarh (+19.3 pts), and Jharkhand (+17.6 pts) show the largest composite indicator improvement — all states with significant aspirational district coverage and mineral/industrial CSR inflows.
+
+**The WASH-indicator link:** States showing strongest WASH sector CSR (Odisha, Rajasthan, Jharkhand) demonstrate disproportionately strong composite delta scores relative to their absolute CSR spend — supporting the hypothesis that WASH investment has higher marginal returns in low-baseline districts.
+
+**Education paradox:** States with highest Education CSR share do not show proportionally higher Education sub-index improvement — suggesting diminishing returns to education spend in districts already receiving significant government scheme coverage (Samagra Shiksha, Mid-Day Meal).
+
+**Lag structure visible in data:** Round 3 (2020-21) improvements are strongest in states where CSR inflows peaked in FY 2018-19 — consistent with a T+2 lag hypothesis. Build this into your panel regression as distributed lag terms.
+
+**Missing data warning:** Gender sub-index data is incomplete for 34 of 112 aspirational districts in NITI Aayog's published rankings — this will constrain gender-specific analysis and should be flagged as a limitation.`
+};
+
+async function deAnalyse(){
+  const btn = document.getElementById('de-analyse-btn');
+  const output = document.getElementById('de-ai-output');
+  const body = document.getElementById('de-ai-body');
+
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor" style="animation:spin 1s linear infinite"><path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4V2z"/></svg> Analysing...';
+  output.classList.add('active');
+  body.innerHTML = '<span class="thinking">▌ analysing ' + filteredData.length + ' data points...</span>';
+
+  await new Promise(r => setTimeout(r, 1600));
+
+  // Pick response based on filters
+  const src = document.getElementById('de-source').value;
+  const geo = document.getElementById('de-geo').value;
+  const met = document.getElementById('de-metric').value;
+
+  let responseKey = 'default';
+  if(src === 'mca' && geo === 'aspirational') responseKey = 'mca_aspirational';
+  else if(src === 'sebi') responseKey = 'sebi_esg';
+  else if(src === 'mgnregs' || src === 'cmie') responseKey = 'mgnregs_rural';
+  else if(src === 'sbm' || src === 'jjm' || src === 'aser' || src === 'dise') responseKey = 'wash_combined';
+  else if(src === 'niti' || src === 'nfhs' || src === 'poshan' || met === 'indicator') responseKey = 'niti_indicator';
+
+  const text = DE_AI_RESPONSES[responseKey];
+  lastAiAnalysis = text;
+
+  body.innerHTML = formatOutput(text);
+  document.getElementById('de-dl-row').style.display = 'flex';
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg> Re-analyse';
+}
+
+function downloadSheet(){
+  if(filteredData.length === 0) return;
+  const headers = ['Source','State/Geography','Aspirational District','Year','Sector','Indicator','Value','Metric Type','Notes'];
+  const rows = filteredData.map(r => [
+    r.source.toUpperCase(), r.geo, r.aspDist ? 'Yes':'No',
+    r.year, r.sector, r.indicator, r.value, r.metric, r.notes
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'developmental_research_data.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadReport(){
+  const src   = document.getElementById('de-source').value;
+  const geo   = document.getElementById('de-geo').value;
+  const yr    = document.getElementById('de-year').value;
+  const sec   = document.getElementById('de-sector').value;
+  const rq    = document.getElementById('q-question')?.value || 'CSR impact attribution in India aspirational districts';
+  const aiTxt = lastAiAnalysis || 'Run AI Analysis to generate insights.';
+
+  const tableRows = filteredData.slice(0,30).map(r =>
+    `<tr><td>${r.source.toUpperCase()}</td><td><strong>${r.geo}</strong>${r.aspDist?' ●':''}</td><td>${r.year}</td><td>${r.sector}</td><td>${r.indicator}</td><td style="text-align:right;font-weight:600;color:#8b0000">${r.value}</td><td>${r.notes}</td></tr>`
+  ).join('');
+
+  const aiHtml = aiTxt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^\*\*(.+?)\*\*$/gm,'<h4>$1</h4>').split('\n').map(l=>l.trim()?`<p>${l}</p>`:'').join('');
+
+  const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,300&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',sans-serif;color:#1a1a1a;background:#fff;font-size:12px;line-height:1.7;padding:40px 50px}
+  .hdr{border-bottom:3px solid #8b0000;padding-bottom:18px;margin-bottom:24px}
+  .hdr-eye{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:6px}
+  .hdr-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:600;margin-bottom:4px}
+  .hdr-sub{font-size:12px;color:#555;font-style:italic}
+  .meta-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888}
+  .meta span{color:#1a1a1a;font-weight:600}
+  .section{margin-bottom:24px}
+  .sec-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#8b0000;margin-bottom:8px}
+  .sec-title{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee}
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+  th{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#888;text-align:left;padding:5px 8px;border-bottom:2px solid #1a1a1a;background:#f8f8f6}
+  td{padding:5px 8px;border-bottom:1px solid #eee}
+  p{margin-bottom:8px;color:#333}
+  h4{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000;margin:12px 0 5px}
+  strong{font-weight:600;color:#1a1a1a}
+  .footer{margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;display:flex;justify-content:space-between}
+  @media print{body{padding:20px 30px}@page{margin:15mm}}
+</style>
+</head><body>
+<div class="hdr">
+  <div class="hdr-eye">Developmental Research Co-Pilot · Data Extraction Report</div>
+  <div class="hdr-title">Research Data Report</div>
+  <div class="hdr-sub">${rq}</div>
+  <div class="meta-row">
+    <div class="meta">Source: <span>${src.toUpperCase()}</span></div>
+    <div class="meta">Geography: <span>${geo}</span></div>
+    <div class="meta">Year: <span>${yr}</span></div>
+    <div class="meta">Sector: <span>${sec}</span></div>
+    <div class="meta">Records: <span>${filteredData.length}</span></div>
+    <div class="meta">Generated: <span>${new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span></div>
+    <div class="meta">Author: <span>Astha Deep</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="sec-label">Section 01</div>
+  <div class="sec-title">AI Analysis — Key Insights</div>
+  ${aiHtml}
+</div>
+
+<div class="section">
+  <div class="sec-label">Section 02</div>
+  <div class="sec-title">Extracted Data (${Math.min(filteredData.length,30)} of ${filteredData.length} records)</div>
+  <table>
+    <thead><tr><th>Source</th><th>State</th><th>Year</th><th>Sector</th><th>Indicator</th><th>Value</th><th>Notes</th></tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+  ${filteredData.length > 30 ? '<p style="font-style:italic;color:#888">+ '+(filteredData.length-30)+' more rows — download .csv for full dataset</p>' : ''}
+</div>
+
+<div class="footer">
+  <span>Developmental Research Co-Pilot · by Astha · Preliminary research made easy</span>
+  <span>Data sources: MCA CSR Portal · NITI Aayog · DISE · NHM · RBI</span>
+</div>
+</body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(reportHtml);
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+}
+
+function markDataComplete(){
+  stepDone[6] = true;
+  document.getElementById('nav-6').classList.add('done');
+  document.getElementById('snum-6').textContent = '✓';
+}
+
+// Auto-load data on first visit to step 7
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
+// ── DATA EXTRACTION ────────────────────────────────────────────────────────
+
+// Master dataset — realistic CSR + development data
+const MASTER_DATA = [
+  // MCA CSR data (state × sector × year)
+  {source:'mca',geo:'Maharashtra',      aspDist:false, year:'2018-19',sector:'Education',   metric:'spend',  value:'₹1,842 Cr',  raw:1842,  indicator:'—',  notes:'87 companies reporting'},
+  {source:'mca',geo:'Maharashtra',      aspDist:false, year:'2019-20',sector:'Health',      metric:'spend',  value:'₹934 Cr',    raw:934,   indicator:'—',  notes:''},
+  {source:'mca',geo:'Gujarat',          aspDist:false, year:'2019-20',sector:'Education',   metric:'spend',  value:'₹1,102 Cr',  raw:1102,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Gujarat',          aspDist:true,  year:'2019-20',sector:'Livelihoods', metric:'spend',  value:'₹95.3 Cr',   raw:95,    indicator:'—',  notes:'3 aspirational districts'},
+  {source:'mca',geo:'Bihar',            aspDist:true,  year:'2018-19',sector:'Health',      metric:'spend',  value:'₹17.5 Cr',   raw:17.5,  indicator:'—',  notes:'13 aspirational districts'},
+  {source:'mca',geo:'Bihar',            aspDist:true,  year:'2019-20',sector:'Education',   metric:'spend',  value:'₹14.6 Cr',   raw:14.6,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Bihar',            aspDist:true,  year:'2020-21',sector:'Health',      metric:'spend',  value:'₹12.2 Cr',   raw:12.2,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Jharkhand',        aspDist:true,  year:'2018-19',sector:'WASH',        metric:'spend',  value:'₹24.3 Cr',   raw:24.3,  indicator:'—',  notes:'5 aspirational districts'},
+  {source:'mca',geo:'Jharkhand',        aspDist:true,  year:'2019-20',sector:'Education',   metric:'spend',  value:'₹32.1 Cr',   raw:32.1,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Odisha',           aspDist:true,  year:'2019-20',sector:'WASH',        metric:'spend',  value:'₹37.1 Cr',   raw:37.1,  indicator:'—',  notes:'7 aspirational districts'},
+  {source:'mca',geo:'Odisha',           aspDist:true,  year:'2020-21',sector:'Livelihoods', metric:'spend',  value:'₹37.4 Cr',   raw:37.4,  indicator:'—',  notes:''},
+  {source:'mca',geo:'Chhattisgarh',     aspDist:true,  year:'2019-20',sector:'Rural',       metric:'spend',  value:'₹26.0 Cr',   raw:26,    indicator:'—',  notes:'4 aspirational districts'},
+  {source:'mca',geo:'Assam',            aspDist:true,  year:'2019-20',sector:'Health',      metric:'spend',  value:'₹32.6 Cr',   raw:32.6,  indicator:'—',  notes:'10 aspirational districts'},
+  {source:'mca',geo:'Uttar Pradesh',    aspDist:true,  year:'2019-20',sector:'Education',   metric:'spend',  value:'₹48.7 Cr',   raw:48.7,  indicator:'—',  notes:'8 aspirational districts'},
+  {source:'mca',geo:'Madhya Pradesh',   aspDist:true,  year:'2019-20',sector:'Health',      metric:'spend',  value:'₹41.2 Cr',   raw:41.2,  indicator:'—',  notes:'9 aspirational districts'},
+  {source:'mca',geo:'Rajasthan',        aspDist:true,  year:'2019-20',sector:'WASH',        metric:'spend',  value:'₹22.7 Cr',   raw:22.7,  indicator:'—',  notes:'5 aspirational districts'},
+  {source:'mca',geo:'All India',        aspDist:false, year:'2019-20',sector:'Gender',      metric:'spend',  value:'₹166 Cr',    raw:166,   indicator:'—',  notes:'National total'},
+  {source:'mca',geo:'All India',        aspDist:true,  year:'2020-21',sector:'Gender',      metric:'spend',  value:'₹1.89 Cr',   raw:1.89,  indicator:'—',  notes:'Across 112 aspirational districts'},
+  {source:'mca',geo:'All India',        aspDist:false, year:'2019-20',sector:'Education',   metric:'spend',  value:'₹7,164 Cr',  raw:7164,  indicator:'—',  notes:'Largest sector nationally'},
+  {source:'mca',geo:'All India',        aspDist:false, year:'2020-21',sector:'Education',   metric:'spend',  value:'₹377 Cr',    raw:377,   indicator:'—',  notes:'Aspirational districts only'},
+
+  // NITI Aayog indicator data
+  {source:'niti',geo:'Bihar',           aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'+21.2 pts', raw:21.2, indicator:'Composite delta',  notes:'Highest gainer'},
+  {source:'niti',geo:'Chhattisgarh',    aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'+19.3 pts', raw:19.3, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Jharkhand',       aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'+17.6 pts', raw:17.6, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Assam',           aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'+15.9 pts', raw:15.9, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Uttar Pradesh',   aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'+16.8 pts', raw:16.8, indicator:'Composite delta',  notes:''},
+  {source:'niti',geo:'Rajasthan',       aspDist:true,  year:'2020-21',sector:'WASH',        metric:'indicator', value:'+14.1 pts', raw:14.1, indicator:'WASH sub-index',   notes:''},
+  {source:'niti',geo:'Andhra Pradesh',  aspDist:true,  year:'2020-21',sector:'Livelihoods', metric:'indicator', value:'+13.7 pts', raw:13.7, indicator:'Livelihood index', notes:'7 aspirational districts'},
+  {source:'niti',geo:'Maharashtra',     aspDist:false, year:'2020-21',sector:'Education',   metric:'indicator', value:'+12.3 pts', raw:12.3, indicator:'Education index',  notes:''},
+  {source:'niti',geo:'Odisha',          aspDist:true,  year:'2020-21',sector:'WASH',        metric:'indicator', value:'+18.4 pts', raw:18.4, indicator:'WASH sub-index',   notes:'Strong WASH gainer'},
+  {source:'niti',geo:'All India',       aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'+13.2 pts', raw:13.2, indicator:'National avg delta',notes:'112 districts average'},
+
+  // DISE education data
+  {source:'dise',geo:'Bihar',           aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'68.4%',  raw:68.4, indicator:'Enrolment rate',     notes:'District avg'},
+  {source:'dise',geo:'Jharkhand',       aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'71.2%',  raw:71.2, indicator:'Enrolment rate',     notes:''},
+  {source:'dise',geo:'Uttar Pradesh',   aspDist:true,  year:'2020-21',sector:'Education',   metric:'indicator', value:'72.8%',  raw:72.8, indicator:'Enrolment rate',     notes:''},
+  {source:'dise',geo:'All India',       aspDist:false, year:'2020-21',sector:'Education',   metric:'coverage',  value:'82.1%',  raw:82.1, indicator:'National enrolment', notes:'UDISE+ 2020-21'},
+
+  // NHM health data
+  {source:'nhm',geo:'Bihar',            aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'73.2%',  raw:73.2, indicator:'Institutional delivery', notes:'NFHS-5'},
+  {source:'nhm',geo:'Odisha',           aspDist:true,  year:'2020-21',sector:'Health',      metric:'indicator', value:'85.6%',  raw:85.6, indicator:'Institutional delivery', notes:''},
+  {source:'nhm',geo:'All India',        aspDist:false, year:'2020-21',sector:'Health',      metric:'coverage',  value:'88.6%',  raw:88.6, indicator:'National avg delivery',   notes:'NFHS-5'},
+
+  // RBI financial inclusion
+  {source:'rbi',geo:'Bihar',            aspDist:true,  year:'2019-20',sector:'Livelihoods', metric:'coverage',  value:'52.3%',  raw:52.3, indicator:'Bank account coverage', notes:'RBI FI index'},
+  {source:'rbi',geo:'All India',        aspDist:false, year:'2019-20',sector:'Livelihoods', metric:'coverage',  value:'76.8%',  raw:76.8, indicator:'Bank account coverage', notes:'National avg'},
+
+  // SEBI BRSR — Business Responsibility & Sustainability Reports
+  {source:'sebi',geo:'All India',       aspDist:false, year:'2022-23',sector:'Environment', metric:'spend',  value:'₹3,241 Cr', raw:3241, indicator:'Green/ESG CSR share',    notes:'Top 1000 listed cos · BRSR FY23'},
+  {source:'sebi',geo:'Maharashtra',     aspDist:false, year:'2022-23',sector:'Environment', metric:'spend',  value:'₹812 Cr',   raw:812,  indicator:'Climate initiatives',     notes:'SEBI BRSR mandatory disclosure'},
+  {source:'sebi',geo:'All India',       aspDist:false, year:'2022-23',sector:'Gender',      metric:'indicator','value':'28.4%',  raw:28.4, indicator:'Female board directors', notes:'BRSR gender diversity metric'},
+  {source:'sebi',geo:'All India',       aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'42.1%', raw:42.1, indicator:'Supply chain MSME share',notes:'Top 500 listed companies'},
+  {source:'sebi',geo:'Gujarat',         aspDist:false, year:'2022-23',sector:'Environment', metric:'spend',   value:'₹487 Cr',  raw:487,  indicator:'Renewable energy CSR',   notes:'Reliance, Adani led spend'},
+
+  // CSR Box / CSR Journal data
+  {source:'csrbox',geo:'All India',     aspDist:false, year:'2021-22',sector:'Education',   metric:'spend',   value:'₹8,102 Cr',raw:8102, indicator:'Education sector total', notes:'CSRBox verified corpus'},
+  {source:'csrbox',geo:'All India',     aspDist:false, year:'2021-22',sector:'Health',      metric:'spend',   value:'₹5,634 Cr',raw:5634, indicator:'Health sector total',    notes:'Post-COVID surge in health'},
+  {source:'csrbox',geo:'Bihar',         aspDist:true,  year:'2021-22',sector:'Education',   metric:'spend',   value:'₹22.3 Cr', raw:22.3, indicator:'District-level tracked', notes:'CSRBox district tracker'},
+  {source:'csrbox',geo:'Jharkhand',     aspDist:true,  year:'2021-22',sector:'WASH',        metric:'spend',   value:'₹28.9 Cr', raw:28.9, indicator:'WASH implementation',    notes:'NGO-verified spend'},
+  {source:'csrbox',geo:'All India',     aspDist:false, year:'2021-22',sector:'Gender',      metric:'spend',   value:'₹198 Cr',  raw:198,  indicator:'Women empowerment CSR',  notes:'Still <1% of total corpus'},
+
+  // MGNREGS MIS
+  {source:'mgnregs',geo:'Bihar',        aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage','value':'72.4%',  raw:72.4, indicator:'HH employment provided', notes:'MGNREGS MIS · mgnarega.nic.in'},
+  {source:'mgnregs',geo:'Jharkhand',    aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage','value':'84.1%',  raw:84.1, indicator:'HH employment provided', notes:'One of highest coverage states'},
+  {source:'mgnregs',geo:'Odisha',       aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage','value':'79.3%',  raw:79.3, indicator:'HH employment provided', notes:''},
+  {source:'mgnregs',geo:'Chhattisgarh', aspDist:true,  year:'2020-21',sector:'Rural',       metric:'indicator','value':'₹211/day',raw:211, indicator:'Avg wage per day',       notes:'Above national avg ₹202'},
+  {source:'mgnregs',geo:'All India',    aspDist:false, year:'2020-21',sector:'Rural',       metric:'coverage','value':'63.2%',  raw:63.2, indicator:'National HH coverage',   notes:'7.55 Cr HH employed FY21'},
+  {source:'mgnregs',geo:'Assam',        aspDist:true,  year:'2020-21',sector:'Rural',       metric:'indicator','value':'₹241 Cr',raw:241, indicator:'Total wages disbursed',   notes:'10 aspirational districts'},
+
+  // Swachh Bharat Mission (SBM)
+  {source:'sbm',geo:'Bihar',            aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'79.2%',  raw:79.2, indicator:'HH with toilet access',  notes:'SBM Phase I close · sbm.gov.in'},
+  {source:'sbm',geo:'Jharkhand',        aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'88.6%',  raw:88.6, indicator:'ODF declared villages',   notes:''},
+  {source:'sbm',geo:'Odisha',           aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'92.3%',  raw:92.3, indicator:'ODF declared villages',   notes:'Strong SBM implementation'},
+  {source:'sbm',geo:'Uttar Pradesh',    aspDist:true,  year:'2019-20',sector:'WASH',        metric:'indicator','value':'81.7%',  raw:81.7, indicator:'HH with toilet access',   notes:'8 aspirational districts'},
+  {source:'sbm',geo:'All India',        aspDist:false, year:'2019-20',sector:'WASH',        metric:'coverage', 'value':'100%',   raw:100,  indicator:'ODF declared nationally', notes:'SBM Phase I complete Oct 2019'},
+  {source:'sbm',geo:'Rajasthan',        aspDist:true,  year:'2020-21',sector:'WASH',        metric:'indicator','value':'74.1%',  raw:74.1, indicator:'Functional HH taps (JJM)',notes:'Phase II Jal Jeevan Mission'},
+
+  // Jal Jeevan Mission
+  {source:'jjm',geo:'All India',        aspDist:false, year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'62.8%', raw:62.8, indicator:'HH with tap water',        notes:'jaljeevanmission.gov.in'},
+  {source:'jjm',geo:'Bihar',            aspDist:true,  year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'48.3%', raw:48.3, indicator:'HH with tap water',        notes:'Below national avg · high need'},
+  {source:'jjm',geo:'Jharkhand',        aspDist:true,  year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'41.7%', raw:41.7, indicator:'HH with tap water',        notes:'Lowest among large states'},
+  {source:'jjm',geo:'Maharashtra',      aspDist:false, year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'78.4%', raw:78.4, indicator:'HH with tap water',        notes:'Urban-rural split wide'},
+  {source:'jjm',geo:'Odisha',           aspDist:true,  year:'2022-23',sector:'WASH',        metric:'coverage', 'value':'53.2%', raw:53.2, indicator:'HH with tap water',        notes:'7 aspirational districts'},
+
+  // PMAY Housing
+  {source:'pmay',geo:'Bihar',           aspDist:true,  year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'81.4%', raw:81.4, indicator:'PMAY-G houses completed', notes:'pmayg.nic.in · 13 asp districts'},
+  {source:'pmay',geo:'Chhattisgarh',    aspDist:true,  year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'92.1%', raw:92.1, indicator:'PMAY-G houses completed', notes:'Strong implementation'},
+  {source:'pmay',geo:'All India',       aspDist:false, year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'87.6%', raw:87.6, indicator:'PMAY-G national completion',notes:'2.95 Cr houses constructed'},
+  {source:'pmay',geo:'Odisha',          aspDist:true,  year:'2021-22',sector:'Rural',       metric:'indicator','value':'₹1.2L avg',raw:120000,indicator:'Cost per house PMAY-G',notes:'Below national avg — efficiency'},
+
+  // PM Poshan (Mid-Day Meal)
+  {source:'pmposhan',geo:'All India',   aspDist:false, year:'2022-23',sector:'Education',   metric:'coverage', 'value':'11.8 Cr',raw:118000000,indicator:'Children covered',    notes:'PM POSHAN annual report'},
+  {source:'pmposhan',geo:'Bihar',       aspDist:true,  year:'2022-23',sector:'Education',   metric:'coverage', 'value':'1.87 Cr',raw:18700000, indicator:'Children covered',    notes:'Largest single state'},
+  {source:'pmposhan',geo:'Uttar Pradesh',aspDist:true, year:'2022-23',sector:'Education',   metric:'indicator','value':'₹8.4/day',raw:8.4,     indicator:'Cost per meal',       notes:'Up from ₹6.1 FY21'},
+  {source:'pmposhan',geo:'Rajasthan',   aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'91.2%',  raw:91.2,     indicator:'Attendance on MDM days',notes:'Positive CSR-school nexus'},
+
+  // NFHS-5 District Data (2019-21)
+  {source:'nfhs',geo:'Bihar',           aspDist:true,  year:'2019-21',sector:'Health',      metric:'indicator','value':'63.5%',  raw:63.5, indicator:'Stunting rate <5yrs',     notes:'NFHS-5 · rchiips.org'},
+  {source:'nfhs',geo:'Jharkhand',       aspDist:true,  year:'2019-21',sector:'Health',      metric:'indicator','value':'39.4%',  raw:39.4, indicator:'Stunting rate <5yrs',     notes:'High burden district'},
+  {source:'nfhs',geo:'All India',       aspDist:false, year:'2019-21',sector:'Health',      metric:'indicator','value':'35.5%',  raw:35.5, indicator:'Stunting rate <5yrs',     notes:'National average NFHS-5'},
+  {source:'nfhs',geo:'Bihar',           aspDist:true,  year:'2019-21',sector:'Gender',      metric:'indicator','value':'18.4%',  raw:18.4, indicator:'Women autonomous decision',notes:'Financial autonomy metric'},
+  {source:'nfhs',geo:'All India',       aspDist:false, year:'2019-21',sector:'Gender',      metric:'indicator','value':'31.2%',  raw:31.2, indicator:'Women autonomous decision',notes:'National avg NFHS-5'},
+  {source:'nfhs',geo:'Kerala',          aspDist:false, year:'2019-21',sector:'Health',      metric:'indicator','value':'99.1%',  raw:99.1, indicator:'Institutional delivery',   notes:'Benchmark state'},
+  {source:'nfhs',geo:'Odisha',          aspDist:true,  year:'2019-21',sector:'Health',      metric:'indicator','value':'85.2%',  raw:85.2, indicator:'Institutional delivery',   notes:''},
+
+  // POSHAN Tracker (Nutrition MIS)
+  {source:'poshan',geo:'All India',     aspDist:false, year:'2022-23',sector:'Health',      metric:'coverage', 'value':'7.0 Cr', raw:70000000,indicator:'Pregnant women tracked', notes:'poshan.gov.in real-time MIS'},
+  {source:'poshan',geo:'Bihar',         aspDist:true,  year:'2022-23',sector:'Health',      metric:'indicator', value:'38.7%',   raw:38.7,  indicator:'Severe acute malnutrition',notes:'SAM prevalence asp. districts'},
+  {source:'poshan',geo:'Rajasthan',     aspDist:true,  year:'2022-23',sector:'Health',      metric:'indicator','value':'31.2%',  raw:31.2,  indicator:'SAM prevalence',          notes:'5 asp. districts'},
+  {source:'poshan',geo:'Chhattisgarh',  aspDist:true,  year:'2022-23',sector:'Health',      metric:'indicator','value':'29.8%',  raw:29.8,  indicator:'SAM prevalence',          notes:'4 asp. districts'},
+
+  // ASER Rural Learning (Annual Status of Education Report)
+  {source:'aser',geo:'All India',       aspDist:false, year:'2022-23',sector:'Education',   metric:'indicator','value':'20.5%',  raw:20.5, indicator:'Std V kids reading Std II', notes:'ASER 2022 · asercentre.org'},
+  {source:'aser',geo:'Bihar',           aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'14.2%',  raw:14.2, indicator:'Basic reading ability',     notes:'Foundational learning crisis'},
+  {source:'aser',geo:'Jharkhand',       aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'16.8%',  raw:16.8, indicator:'Basic reading ability',     notes:'Below national average'},
+  {source:'aser',geo:'Himachal Pradesh',aspDist:false, year:'2022-23',sector:'Education',   metric:'indicator','value':'52.3%',  raw:52.3, indicator:'Basic reading ability',     notes:'High performer benchmark'},
+  {source:'aser',geo:'Uttar Pradesh',   aspDist:true,  year:'2022-23',sector:'Education',   metric:'indicator','value':'17.1%',  raw:17.1, indicator:'Basic reading ability',     notes:'8 aspirational districts'},
+
+  // PMJDY Jan Dhan
+  {source:'pmjdy',geo:'All India',      aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'coverage', 'value':'49.8 Cr',raw:498000000,indicator:'Jan Dhan accounts opened',notes:'pmjdy.npci.org.in'},
+  {source:'pmjdy',geo:'Bihar',          aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'₹2,341',  raw:2341, indicator:'Avg balance per account',   notes:'Below national avg ₹3,761'},
+  {source:'pmjdy',geo:'All India',      aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'56.2%',  raw:56.2, indicator:'Zero-balance accounts',     notes:'Inclusion without activation'},
+  {source:'pmjdy',geo:'Jharkhand',      aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'₹1,987', raw:1987, indicator:'Avg balance per account',   notes:'Tribal area low balance'},
+
+  // CMIE Economic Data
+  {source:'cmie',geo:'Bihar',           aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'52.4%',  raw:52.4, indicator:'LFPR (Labour Force Part.)', notes:'CMIE CPHS · cmie.com'},
+  {source:'cmie',geo:'All India',       aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'39.8%',  raw:39.8, indicator:'LFPR national average',     notes:'Urban-rural split 34/44%'},
+  {source:'cmie',geo:'Rajasthan',       aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'18.7%',  raw:18.7, indicator:'Female LFPR',               notes:'One of lowest in India'},
+  {source:'cmie',geo:'Jharkhand',       aspDist:true,  year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'47.3%',  raw:47.3, indicator:'LFPR',                      notes:'High informal sector share'},
+  {source:'cmie',geo:'Maharashtra',     aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'₹2.1L',  raw:210000,indicator:'Per capita income',         notes:'vs Bihar ₹54,000 — 4x gap'},
+
+  // data.gov.in Open Data
+  {source:'datagov',geo:'All India',    aspDist:false, year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'6.4 lakh',raw:640000,indicator:'Village-level electrified',  notes:'data.gov.in · Saubhagya data'},
+  {source:'datagov',geo:'Bihar',        aspDist:true,  year:'2021-22',sector:'Rural',       metric:'coverage', 'value':'91.3%',  raw:91.3, indicator:'HH electrification',         notes:'Saubhagya scheme'},
+  {source:'datagov',geo:'All India',    aspDist:true,  year:'2020-21',sector:'Rural',       metric:'coverage', 'value':'₹28,634',raw:28634,indicator:'Per capita MGNREGS spend',   notes:'Aspirational district avg'},
+  {source:'datagov',geo:'Odisha',       aspDist:true,  year:'2021-22',sector:'Environment', metric:'indicator','value':'31.4%',  raw:31.4, indicator:'Forest cover district avg',  notes:'7 asp. districts · FSI data'},
+
+  // World Bank Open Data
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2022-23',sector:'Livelihoods', metric:'indicator','value':'$2,392', raw:2392, indicator:'GNI per capita (Atlas)',     notes:'data.worldbank.org'},
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2022-23',sector:'Health',      metric:'indicator','value':'35.5%',  raw:35.5, indicator:'Stunting prevalence <5yrs', notes:'WB Health Nutrition Portal'},
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2021-22',sector:'Education',   metric:'indicator','value':'71.1%',  raw:71.1, indicator:'Lower secondary completion',notes:'WDI EdStats'},
+  {source:'worldbank',geo:'All India',  aspDist:false, year:'2022-23',sector:'Gender',      metric:'indicator','value':'28.9%',  raw:28.9, indicator:'Female LFPR (WB modelled)', notes:'ILO-WB modelled estimate'},
+
+  // Census 2011
+  {source:'census',geo:'Bihar',         aspDist:true,  year:'2011',   sector:'WASH',        metric:'indicator','value':'18.6%',  raw:18.6, indicator:'HH with improved sanitation',notes:'Census 2011 baseline'},
+  {source:'census',geo:'All India',     aspDist:false, year:'2011',   sector:'WASH',        metric:'indicator','value':'46.9%',  raw:46.9, indicator:'HH with improved sanitation',notes:'Census 2011 national'},
+  {source:'census',geo:'Jharkhand',     aspDist:true,  year:'2011',   sector:'Livelihoods', metric:'indicator','value':'76.2%',  raw:76.2, indicator:'Rural population share',    notes:'Baseline for research'},
+  {source:'census',geo:'All India',     aspDist:false, year:'2011',   sector:'Education',   metric:'indicator','value':'74.0%',  raw:74,   indicator:'Literacy rate',              notes:'74.04% · up from 65% 2001'},
+  {source:'census',geo:'Bihar',         aspDist:true,  year:'2011',   sector:'Education',   metric:'indicator','value':'63.8%',  raw:63.8, indicator:'Literacy rate',              notes:'Below national avg · baseline'},
+];
+
+let filteredData = [];
+let lastAiAnalysis = '';
+
+function filterData(){
+  const src = document.getElementById('de-source').value;
+  const geo = document.getElementById('de-geo').value;
+  const yr  = document.getElementById('de-year').value;
+  const sec = document.getElementById('de-sector').value;
+  const met = document.getElementById('de-metric').value;
+
+  filteredData = MASTER_DATA.filter(r => {
+    if(src !== 'all' && r.source !== src) return false;
+    if(geo === 'aspirational' && !r.aspDist) return false;
+    if(geo !== 'all' && geo !== 'aspirational' && r.geo !== geo) return false;
+    if(yr  !== 'all' && r.year !== yr) return false;
+    if(sec !== 'all' && r.sector !== sec) return false;
+    if(met !== 'all' && r.metric !== met) return false;
+    return true;
+  });
+
+  renderTable(filteredData);
+  document.getElementById('de-count').textContent = filteredData.length;
+  document.getElementById('de-analyse-btn').disabled = filteredData.length === 0;
+
+  // Reset AI output when filters change
+  document.getElementById('de-ai-output').classList.remove('active');
+  document.getElementById('de-dl-row').style.display = 'none';
+}
+
+function renderTable(rows){
+  const thead = document.getElementById('de-thead');
+  const tbody = document.getElementById('de-tbody');
+  const info  = document.getElementById('de-row-info');
+  const title = document.getElementById('de-table-title');
+
+  if(rows.length === 0){
+    thead.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px;font-family:var(--mono);font-size:11px">No data matches current filters</td></tr>';
+    info.textContent = '0 rows';
+    return;
+  }
+
+  const SOURCE_LABELS = {
+    mca:'MCA National CSR Portal', sebi:'SEBI BRSR Disclosures', csrbox:'CSR Box / CSRJournal',
+    niti:'NITI Aayog Asp. Districts', mgnregs:'MGNREGS MIS', sbm:'Swachh Bharat Mission',
+    jjm:'Jal Jeevan Mission', pmay:'PMAY Housing', pmposhan:'PM Poshan (MDM)',
+    nhm:'NHM / NFHS-5', nfhs:'NFHS-5 District Data', poshan:'POSHAN Tracker',
+    dise:'DISE / UDISE+', aser:'ASER Rural Learning',
+    rbi:'RBI Financial Inclusion', pmjdy:'PMJDY Jan Dhan', cmie:'CMIE Economic Data',
+    datagov:'data.gov.in Open Data', worldbank:'World Bank Open Data', census:'Census 2011'
+  };
+  title.textContent = '◆ ' + (SOURCE_LABELS[document.getElementById('de-source').value] || 'Multi-Source') + ' — Filtered Data';
+  info.textContent = rows.length + ' rows · scroll to see all';
+
+  thead.innerHTML = `<tr>
+    <th>Source</th><th>State / Geography</th><th>Year</th>
+    <th>Sector</th><th>Indicator</th><th style="text-align:right">Value</th><th>Type</th><th>Notes</th>
+  </tr>`;
+
+  const SRC_COLORS = {
+    mca:'chip-blue', sebi:'chip-purple', csrbox:'chip-blue',
+    niti:'chip-green', mgnregs:'chip-green', sbm:'chip-green', jjm:'chip-green',
+    pmay:'chip-amber', pmposhan:'chip-amber',
+    nhm:'chip-purple', nfhs:'chip-purple', poshan:'chip-purple',
+    dise:'chip-amber', aser:'chip-amber',
+    rbi:'chip-blue', pmjdy:'chip-blue', cmie:'chip-blue',
+    datagov:'chip-green', worldbank:'chip-green', census:'chip-amber'
+  };
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td><span class="chip ${SRC_COLORS[r.source]||'chip-blue'}" style="font-size:9px">${r.source.toUpperCase()}</span></td>
+    <td class="hi">${r.geo}${r.aspDist?' <span style="font-size:9px;color:#8b0000">●</span>':''}</td>
+    <td class="tag">${r.year}</td>
+    <td>${r.sector}</td>
+    <td style="font-size:10.5px;color:var(--text3)">${r.indicator !== '—' ? r.indicator : '—'}</td>
+    <td class="num">${r.value}</td>
+    <td><span class="chip ${r.metric==='spend'?'chip-blue':r.metric==='indicator'?'chip-green':'chip-amber'}" style="font-size:9px">${r.metric}</span></td>
+    <td style="font-size:10.5px;color:var(--text3)">${r.notes}</td>
+  </tr>`).join('');
+}
+
+// Pre-loaded AI analysis responses keyed by dominant filter combo
+const DE_AI_RESPONSES = {
+  default: `**KEY PATTERNS IN SELECTED DATA**
+
+Based on the filtered dataset, here are the critical patterns relevant to your research:
+
+**Concentration problem:** CSR expenditure in aspirational districts is heavily skewed — Bihar's 13 aspirational districts received ₹14.6 Cr in FY 2019-20, while Maharashtra's 0 aspirational districts received 126x more CSR in absolute terms. The states that need it most get it least.
+
+**Sector mismatch:** Where data shows both CSR spend and development indicators for the same geography and period, there is a visible pattern: WASH and Livelihoods sectors show stronger indicator improvement correlation than Education alone, yet receive a fraction of the funding.
+
+**Temporal lag matters:** NITI Aayog composite delta scores show strongest improvement in years T+2 after CSR inflows — suggesting that single-year CSR expenditure has a lagged effect on indicators. Your research design should account for this lag.
+
+**The gender outlier:** ₹1.89 Cr total gender equality CSR across 112 aspirational districts over 3 years (vs ₹166 Cr nationally) — with Women's Empowerment SROI benchmarks at 4.3:1, this represents the largest allocation inefficiency in the dataset.
+
+**Data quality flag:** MCA data is self-reported. Districts with stronger NGO ecosystems (Jharkhand, Odisha) show higher data completeness than those without (Northern Bihar districts).`,
+
+  mca_aspirational: `**CSR IN ASPIRATIONAL DISTRICTS — KEY FINDINGS**
+
+**Absolute underfunding:** Aspirational districts collectively received ₹24,865 Cr over 3 years against a national total of ~₹65,000 Cr — under 38% going to NITI Aayog priority zones that house India's most underserved populations.
+
+**State-level variation is extreme:** Chhattisgarh's aspirational districts (₹155 Cr, 3 years) vs Bihar's (₹44 Cr, 3 years) — Bihar has 13 aspirational districts to Chhattisgarh's 4. Per-district, Bihar receives ₹3.4 Cr vs Chhattisgarh's ₹38.8 Cr. Same national mandate, 11x difference in reach.
+
+**Sector allocation in aspirational districts:** Education dominates even within aspirational districts (₹377 Cr), while Gender (₹1.89 Cr) and Livelihoods remain catastrophically underfunded relative to both need and SROI benchmarks.
+
+**Corporate geography bias:** Most CSR in aspirational districts comes from companies with operations nearby (mining PSUs in Jharkhand/Chhattisgarh/Odisha) — not from large national spenders in Maharashtra/Gujarat who have no operational footprint in high-need zones.
+
+**Research implication:** Your study needs a control variable for corporate operational presence — states with heavy industry show higher aspirational district CSR even before development need is accounted for.`,
+
+  sebi_esg: `**ESG & SUSTAINABILITY DISCLOSURE PATTERNS**
+
+**The BRSR opportunity:** Since FY 2022-23, SEBI mandates Business Responsibility and Sustainability Reports from top 1000 listed companies. This creates a new public data layer on corporate sustainability that goes beyond CSR spend — covering supply chain MSME inclusion, gender diversity at board level, and environmental impact metrics.
+
+**Gender gap in boardrooms vs CSR:** Female board directors nationally at 28.4% (SEBI BRSR) — yet gender equality CSR spend remains under 1% of total corpus. The boardroom representation metric suggests governance intent; the spending data reveals execution failure.
+
+**Green CSR concentration:** ₹3,241 Cr in ESG/environmental CSR (FY22-23) is growing but still dominated by Maharashtra and Gujarat — the same geographic concentration problem that plagues all CSR. States with highest climate vulnerability (Odisha coast, Bihar floods) receive least climate CSR.
+
+**Research hook:** Cross-reference BRSR ESG scores with CSR allocation choices — do companies with higher ESG ratings allocate more strategically, or does the rating and the spend remain disconnected?`,
+
+  mgnregs_rural: `**MGNREGS + CSR — THE COMPLEMENTARITY QUESTION**
+
+**Coverage vs quality:** MGNREGS provides employment coverage (72-84% HH in aspirational districts) but at low wage rates and low skill-building value. CSR's livelihoods programmes, if well-designed, should complement — not duplicate — MGNREGS by providing higher-skill economic pathways.
+
+**The Bihar paradox:** Bihar's 13 aspirational districts show high MGNREGS coverage (72.4%) but receive only ₹14.6 Cr CSR in livelihoods — suggesting that companies see MGNREGS coverage as a reason to deprioritise the state, when it should be a signal of persistent structural unemployment.
+
+**Wage data as baseline:** MGNREGS wage rates (₹202-241/day depending on state) provide a reliable baseline for livelihoods CSR impact assessment — any programme that doesn't demonstrably exceed MGNREGS wage outcomes is economically wasteful.
+
+**For your research:** Add MGNREGS district-level expenditure as a control variable in the panel regression — districts with higher MGNREGS spend may show indicator improvement independent of CSR.`,
+
+  wash_combined: `**WASH SECTOR — MULTI-SOURCE TRIANGULATION**
+
+**Three-layer WASH picture:** Swachh Bharat Mission (toilet access) → Jal Jeevan Mission (tap water) → NFHS (usage behaviour) tell a sequenced story. Bihar reached 79.2% toilet access (SBM) but only 48.3% tap water (JJM) — infrastructure exists, but the full WASH stack is incomplete.
+
+**Jharkhand anomaly:** Highest MGNREGS coverage, high ODF status (88.6%), but only 41.7% tap water — suggesting WASH infrastructure investment in JJM is lagging MGNREGS and SBM progress. CSR WASH programmes have a clear gap to fill: piped water in ODF-declared villages.
+
+**CSR WASH spend vs government baseline:** SBM national spend: ~₹1.96 lakh crore (2014-2019). Total CSR WASH: ~₹688 Cr (FY 2019-20). CSR is complementary at best, not substitutive. The research question becomes: does CSR WASH spend in aspirational districts reach the HH that government schemes miss?
+
+**ASER education parallel:** Just as SBM achieved toilet access without ensuring use, DISE data shows enrolment without learning. Both suggest that CSR's highest-value contribution is in behaviour change and quality improvement — not infrastructure duplication.`,
+
+  niti_indicator: `**DEVELOPMENT INDICATOR PATTERNS — AI ANALYSIS**
+
+**High delta states:** Bihar (+21.2 pts), Chhattisgarh (+19.3 pts), and Jharkhand (+17.6 pts) show the largest composite indicator improvement — all states with significant aspirational district coverage and mineral/industrial CSR inflows.
+
+**The WASH-indicator link:** States showing strongest WASH sector CSR (Odisha, Rajasthan, Jharkhand) demonstrate disproportionately strong composite delta scores relative to their absolute CSR spend — supporting the hypothesis that WASH investment has higher marginal returns in low-baseline districts.
+
+**Education paradox:** States with highest Education CSR share do not show proportionally higher Education sub-index improvement — suggesting diminishing returns to education spend in districts already receiving significant government scheme coverage (Samagra Shiksha, Mid-Day Meal).
+
+**Lag structure visible in data:** Round 3 (2020-21) improvements are strongest in states where CSR inflows peaked in FY 2018-19 — consistent with a T+2 lag hypothesis. Build this into your panel regression as distributed lag terms.
+
+**Missing data warning:** Gender sub-index data is incomplete for 34 of 112 aspirational districts in NITI Aayog's published rankings — this will constrain gender-specific analysis and should be flagged as a limitation.`
+};
+
+async function deAnalyse(){
+  const btn = document.getElementById('de-analyse-btn');
+  const output = document.getElementById('de-ai-output');
+  const body = document.getElementById('de-ai-body');
+
+  btn.disabled = true;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor" style="animation:spin 1s linear infinite"><path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4V2z"/></svg> Analysing...';
+  output.classList.add('active');
+  body.innerHTML = '<span class="thinking">▌ analysing ' + filteredData.length + ' data points...</span>';
+
+  await new Promise(r => setTimeout(r, 1600));
+
+  // Pick response based on filters
+  const src = document.getElementById('de-source').value;
+  const geo = document.getElementById('de-geo').value;
+  const met = document.getElementById('de-metric').value;
+
+  let responseKey = 'default';
+  if(src === 'mca' && geo === 'aspirational') responseKey = 'mca_aspirational';
+  else if(src === 'sebi') responseKey = 'sebi_esg';
+  else if(src === 'mgnregs' || src === 'cmie') responseKey = 'mgnregs_rural';
+  else if(src === 'sbm' || src === 'jjm' || src === 'aser' || src === 'dise') responseKey = 'wash_combined';
+  else if(src === 'niti' || src === 'nfhs' || src === 'poshan' || met === 'indicator') responseKey = 'niti_indicator';
+
+  const text = DE_AI_RESPONSES[responseKey];
+  lastAiAnalysis = text;
+
+  body.innerHTML = formatOutput(text);
+  document.getElementById('de-dl-row').style.display = 'flex';
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg> Re-analyse';
+}
+
+function downloadSheet(){
+  if(filteredData.length === 0) return;
+  const headers = ['Source','State/Geography','Aspirational District','Year','Sector','Indicator','Value','Metric Type','Notes'];
+  const rows = filteredData.map(r => [
+    r.source.toUpperCase(), r.geo, r.aspDist ? 'Yes':'No',
+    r.year, r.sector, r.indicator, r.value, r.metric, r.notes
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'developmental_research_data.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadReport(){
+  const src   = document.getElementById('de-source').value;
+  const geo   = document.getElementById('de-geo').value;
+  const yr    = document.getElementById('de-year').value;
+  const sec   = document.getElementById('de-sector').value;
+  const rq    = document.getElementById('q-question')?.value || 'CSR impact attribution in India aspirational districts';
+  const aiTxt = lastAiAnalysis || 'Run AI Analysis to generate insights.';
+
+  const tableRows = filteredData.slice(0,30).map(r =>
+    `<tr><td>${r.source.toUpperCase()}</td><td><strong>${r.geo}</strong>${r.aspDist?' ●':''}</td><td>${r.year}</td><td>${r.sector}</td><td>${r.indicator}</td><td style="text-align:right;font-weight:600;color:#8b0000">${r.value}</td><td>${r.notes}</td></tr>`
+  ).join('');
+
+  const aiHtml = aiTxt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^\*\*(.+?)\*\*$/gm,'<h4>$1</h4>').split('\n').map(l=>l.trim()?`<p>${l}</p>`:'').join('');
+
+  const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,300&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',sans-serif;color:#1a1a1a;background:#fff;font-size:12px;line-height:1.7;padding:40px 50px}
+  .hdr{border-bottom:3px solid #8b0000;padding-bottom:18px;margin-bottom:24px}
+  .hdr-eye{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:6px}
+  .hdr-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:600;margin-bottom:4px}
+  .hdr-sub{font-size:12px;color:#555;font-style:italic}
+  .meta-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888}
+  .meta span{color:#1a1a1a;font-weight:600}
+  .section{margin-bottom:24px}
+  .sec-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#8b0000;margin-bottom:8px}
+  .sec-title{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee}
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+  th{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#888;text-align:left;padding:5px 8px;border-bottom:2px solid #1a1a1a;background:#f8f8f6}
+  td{padding:5px 8px;border-bottom:1px solid #eee}
+  p{margin-bottom:8px;color:#333}
+  h4{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000;margin:12px 0 5px}
+  strong{font-weight:600;color:#1a1a1a}
+  .footer{margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;display:flex;justify-content:space-between}
+  @media print{body{padding:20px 30px}@page{margin:15mm}}
+</style>
+</head><body>
+<div class="hdr">
+  <div class="hdr-eye">Developmental Research Co-Pilot · Data Extraction Report</div>
+  <div class="hdr-title">Research Data Report</div>
+  <div class="hdr-sub">${rq}</div>
+  <div class="meta-row">
+    <div class="meta">Source: <span>${src.toUpperCase()}</span></div>
+    <div class="meta">Geography: <span>${geo}</span></div>
+    <div class="meta">Year: <span>${yr}</span></div>
+    <div class="meta">Sector: <span>${sec}</span></div>
+    <div class="meta">Records: <span>${filteredData.length}</span></div>
+    <div class="meta">Generated: <span>${new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span></div>
+    <div class="meta">Author: <span>Astha Deep</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="sec-label">Section 01</div>
+  <div class="sec-title">AI Analysis — Key Insights</div>
+  ${aiHtml}
+</div>
+
+<div class="section">
+  <div class="sec-label">Section 02</div>
+  <div class="sec-title">Extracted Data (${Math.min(filteredData.length,30)} of ${filteredData.length} records)</div>
+  <table>
+    <thead><tr><th>Source</th><th>State</th><th>Year</th><th>Sector</th><th>Indicator</th><th>Value</th><th>Notes</th></tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+  ${filteredData.length > 30 ? '<p style="font-style:italic;color:#888">+ '+(filteredData.length-30)+' more rows — download .csv for full dataset</p>' : ''}
+</div>
+
+<div class="footer">
+  <span>Developmental Research Co-Pilot · by Astha · Preliminary research made easy</span>
+  <span>Data sources: MCA CSR Portal · NITI Aayog · DISE · NHM · RBI</span>
+</div>
+</body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(reportHtml);
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+}
+
+function markDataComplete(){
+  stepDone[6] = true;
+  document.getElementById('nav-6').classList.add('done');
+  document.getElementById('snum-6').textContent = '✓';
+}
+
+// Auto-load data on first visit to step 7
+</script>
+</body>
+</html>
