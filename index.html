@@ -451,6 +451,29 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 .dl-pdf:hover{background:#8b0000;color:#fff}
 .dl-btn svg{width:14px;height:14px;flex-shrink:0}
 .de-hj{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;background:rgba(46,125,50,.08);border:1px solid rgba(46,125,50,.25);border-radius:4px;margin-bottom:12px;font-family:var(--mono);font-size:11px;color:#1b5e20;line-height:1.6}
+
+/* ── FAB REPORT BUTTON ─────── */
+.fab-report{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:none;align-items:center;gap:8px;
+  background:#8b0000;color:#fff;border:none;
+  padding:12px 20px;border-radius:30px;
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.05em;
+  cursor:pointer;box-shadow:0 4px 20px rgba(139,0,0,.4);
+  transition:all .2s;
+}
+.fab-report:hover{background:#6d0000;transform:translateY(-2px);box-shadow:0 6px 24px rgba(139,0,0,.5)}
+.fab-report svg{width:15px;height:15px}
+/* step context ribbon */
+.ctx-ribbon{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  padding:8px 0 12px;margin-bottom:4px;
+  border-bottom:1px solid var(--border);
+  display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+}
+.ctx-tag{padding:2px 8px;border-radius:2px;font-size:9px;font-weight:600;letter-spacing:.06em}
+.ctx-set{background:rgba(46,125,50,.1);color:#2e7d32;border:1px solid rgba(46,125,50,.25)}
+.ctx-empty{background:rgba(0,0,0,.04);color:var(--text3);border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -618,6 +641,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 
       <!-- ── STEP 2: LITERATURE ─────────────────────────── -->
       <div class="step-panel" id="panel-1">
+        <div class="ctx-ribbon" id="ctx-1">← Complete earlier steps to see context here</div>
         <div class="input-zone">
           <div class="input-zone-label">What do you already know about this area?</div>
           <textarea id="q-lit" rows="3" placeholder="e.g. MCA compendium data shows CSR in aspirational districts is concentrated in education (~₹377 Cr) while gender equality received only ₹1.89 Cr across 112 districts over 3 years. SROI benchmarks: Women Empowerment 4.3x vs Education 4.1x vs Environment 2.9x..."></textarea>
@@ -649,6 +673,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 
       <!-- ── STEP 3: METHODOLOGY ────────────────────────── -->
       <div class="step-panel" id="panel-2">
+        <div class="ctx-ribbon" id="ctx-2">← Complete earlier steps to see context here</div>
         <div class="input-zone">
           <div class="input-zone-label">Research Approach (select all that apply)</div>
           <div class="method-grid">
@@ -687,6 +712,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 
       <!-- ── STEP 4: DATA SOURCES ───────────────────────── -->
       <div class="step-panel" id="panel-3">
+        <div class="ctx-ribbon" id="ctx-3">← Complete earlier steps to see context here</div>
         <div class="input-zone">
           <div class="input-zone-label">Which data types are you looking for?</div>
           <textarea id="q-datatypes" rows="2" placeholder="e.g. CSR expenditure data by district and sector · Development indicator data (HDI, infant mortality, literacy) · NGO partner registrations · Government scheme coverage..."></textarea>
@@ -714,6 +740,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 
       <!-- ── STEP 5: OUTPUT FRAMEWORK ───────────────────── -->
       <div class="step-panel" id="panel-4">
+        <div class="ctx-ribbon" id="ctx-4">← Complete earlier steps to see context here</div>
         <div class="input-zone">
           <div class="input-zone-label">Target Audience</div>
           <select id="q-audience">
@@ -770,6 +797,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 
       <!-- ── STEP 6: GEOSPATIAL SCOPE ───────────────────────── -->
       <div class="step-panel" id="panel-5">
+        <div class="ctx-ribbon" id="ctx-5">← Complete earlier steps to see context here</div>
 
         <!-- scope mode selector -->
         <div class="scope-bar">
@@ -827,6 +855,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 
       <!-- ── STEP 7: DATA EXTRACTION ─────────────────────── -->
       <div class="step-panel" id="panel-6">
+        <div class="ctx-ribbon" id="ctx-6">← Complete earlier steps to see context here</div>
 
         <div class="de-hj">
           <span>⚡</span>
@@ -961,7 +990,7 @@ table.de-table td.hi{color:var(--text);font-weight:600}
             <svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>
             Download Sheet (.csv)
           </button>
-          <button class="dl-btn dl-pdf" onclick="downloadReport()">
+          <button class="dl-btn dl-pdf" onclick="generateFullReport()">
             <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2h7l3 3v9H3V2zm7 0v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1.2"/></svg>
             Download Report (.pdf)
           </button>
@@ -982,6 +1011,44 @@ table.de-table td.hi{color:var(--text);font-weight:600}
 let currentStep = 0;
 const totalSteps = 7;
 const stepDone = [false,false,false,false,false,false,false];
+
+// ── GLOBAL RESEARCH STATE — captures all layers ────────────────────────
+const RS = {
+  q: { question:'', sector:'', geo:'', hypothesis:'' },
+  lit: { known:'', pubs:'', ai:'' },
+  method: { selected:[], constraints:'', ai:'' },
+  data: { types:'', ai:'' },
+  output: { audience:'', deliverable:'', ai:'' },
+  geo: { scope:'india', state:null, stateData:null },
+  extract: { source:'all', geo:'all', year:'all', sector:'all', rows:[], ai:'' },
+  completedSteps: 0
+};
+
+function updateRS(){
+  RS.q.question    = document.getElementById('q-question')?.value || '';
+  RS.q.sector      = document.getElementById('q-sector')?.value || '';
+  RS.q.geo         = document.getElementById('q-geo')?.value || '';
+  RS.q.hypothesis  = document.getElementById('q-hypo')?.value || '';
+  RS.lit.known     = document.getElementById('q-lit')?.value || '';
+  RS.lit.pubs      = document.getElementById('q-pubs')?.value || '';
+  RS.method.selected = [...document.querySelectorAll('.method-tag input:checked')].map(i=>i.value);
+  RS.method.constraints = document.getElementById('q-constraints')?.value || '';
+  RS.data.types    = document.getElementById('q-datatypes')?.value || '';
+  RS.output.audience   = document.getElementById('q-audience')?.value || '';
+  RS.output.deliverable= document.getElementById('q-deliverable')?.value || '';
+  RS.geo.scope     = activeScope || 'india';
+  RS.geo.state     = selectedState?.name || null;
+  RS.geo.stateData = selectedState || null;
+  RS.extract.source = document.getElementById('de-source')?.value || 'all';
+  RS.extract.geo   = document.getElementById('de-geo')?.value || 'all';
+  RS.extract.year  = document.getElementById('de-year')?.value || 'all';
+  RS.extract.sector= document.getElementById('de-sector')?.value || 'all';
+  RS.extract.rows  = filteredData || [];
+  RS.completedSteps = stepDone.filter(Boolean).length;
+  // Show report button once 3+ steps done
+  const fab = document.getElementById('fab-report');
+  if(fab) fab.style.display = RS.completedSteps >= 3 ? 'flex' : 'none';
+}
 
 const stepTitles = [
   'Frame the <em>Research Question</em>',
@@ -1407,6 +1474,7 @@ function selectState(name, d, marker){
     updateCompare(name, d);
   }
   updateScopeOutput(activeScope, name);
+  RS.geo.state = name; RS.geo.stateData = d; updateRS();
 
   // Zoom to state
   if(activeScope !== 'india'){
@@ -1469,6 +1537,7 @@ function setScope(scope){
     if(selectedState) updateCompare(selectedState.name, selectedState);
     updateScopeOutput('compare', selectedState?.name || null);
   }
+  updateRS();
 }
 
 function toggleLayer(layer){
@@ -1851,6 +1920,8 @@ async function deAnalyse(){
 
   body.innerHTML = formatOutput(text);
   document.getElementById('de-dl-row').style.display = 'flex';
+  RS.extract.ai = text;
+  updateRS();
 
   btn.disabled = false;
   btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg> Re-analyse';
@@ -1872,87 +1943,8 @@ function downloadSheet(){
   URL.revokeObjectURL(a.href);
 }
 
-function downloadReport(){
-  const src   = document.getElementById('de-source').value;
-  const geo   = document.getElementById('de-geo').value;
-  const yr    = document.getElementById('de-year').value;
-  const sec   = document.getElementById('de-sector').value;
-  const rq    = document.getElementById('q-question')?.value || 'CSR impact attribution in India aspirational districts';
-  const aiTxt = lastAiAnalysis || 'Run AI Analysis to generate insights.';
+function downloadReport(){ generateFullReport(); }
 
-  const tableRows = filteredData.slice(0,30).map(r =>
-    `<tr><td>${r.source.toUpperCase()}</td><td><strong>${r.geo}</strong>${r.aspDist?' ●':''}</td><td>${r.year}</td><td>${r.sector}</td><td>${r.indicator}</td><td style="text-align:right;font-weight:600;color:#8b0000">${r.value}</td><td>${r.notes}</td></tr>`
-  ).join('');
-
-  const aiHtml = aiTxt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^\*\*(.+?)\*\*$/gm,'<h4>$1</h4>').split('\n').map(l=>l.trim()?`<p>${l}</p>`:'').join('');
-
-  const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,300&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'IBM Plex Sans',sans-serif;color:#1a1a1a;background:#fff;font-size:12px;line-height:1.7;padding:40px 50px}
-  .hdr{border-bottom:3px solid #8b0000;padding-bottom:18px;margin-bottom:24px}
-  .hdr-eye{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:6px}
-  .hdr-title{font-family:'IBM Plex Serif',serif;font-size:22px;font-weight:600;margin-bottom:4px}
-  .hdr-sub{font-size:12px;color:#555;font-style:italic}
-  .meta-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px}
-  .meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888}
-  .meta span{color:#1a1a1a;font-weight:600}
-  .section{margin-bottom:24px}
-  .sec-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#8b0000;margin-bottom:8px}
-  .sec-title{font-family:'IBM Plex Serif',serif;font-size:16px;font-weight:600;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #eee}
-  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
-  th{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#888;text-align:left;padding:5px 8px;border-bottom:2px solid #1a1a1a;background:#f8f8f6}
-  td{padding:5px 8px;border-bottom:1px solid #eee}
-  p{margin-bottom:8px;color:#333}
-  h4{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000;margin:12px 0 5px}
-  strong{font-weight:600;color:#1a1a1a}
-  .footer{margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;display:flex;justify-content:space-between}
-  @media print{body{padding:20px 30px}@page{margin:15mm}}
-</style>
-</head><body>
-<div class="hdr">
-  <div class="hdr-eye">Developmental Research Co-Pilot · Data Extraction Report</div>
-  <div class="hdr-title">Research Data Report</div>
-  <div class="hdr-sub">${rq}</div>
-  <div class="meta-row">
-    <div class="meta">Source: <span>${src.toUpperCase()}</span></div>
-    <div class="meta">Geography: <span>${geo}</span></div>
-    <div class="meta">Year: <span>${yr}</span></div>
-    <div class="meta">Sector: <span>${sec}</span></div>
-    <div class="meta">Records: <span>${filteredData.length}</span></div>
-    <div class="meta">Generated: <span>${new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span></div>
-    <div class="meta">Author: <span>Astha Deep</span></div>
-  </div>
-</div>
-
-<div class="section">
-  <div class="sec-label">Section 01</div>
-  <div class="sec-title">AI Analysis — Key Insights</div>
-  ${aiHtml}
-</div>
-
-<div class="section">
-  <div class="sec-label">Section 02</div>
-  <div class="sec-title">Extracted Data (${Math.min(filteredData.length,30)} of ${filteredData.length} records)</div>
-  <table>
-    <thead><tr><th>Source</th><th>State</th><th>Year</th><th>Sector</th><th>Indicator</th><th>Value</th><th>Notes</th></tr></thead>
-    <tbody>${tableRows}</tbody>
-  </table>
-  ${filteredData.length > 30 ? '<p style="font-style:italic;color:#888">+ '+(filteredData.length-30)+' more rows — download .csv for full dataset</p>' : ''}
-</div>
-
-<div class="footer">
-  <span>Developmental Research Co-Pilot · by Astha · Preliminary research made easy</span>
-  <span>Data sources: MCA CSR Portal · NITI Aayog · DISE · NHM · RBI</span>
-</div>
-</body></html>`;
-
-  const win = window.open('','_blank');
-  win.document.write(reportHtml);
-  win.document.close();
-  setTimeout(() => win.print(), 600);
-}
 
 function markDataComplete(){
   stepDone[6] = true;
@@ -1961,6 +1953,260 @@ function markDataComplete(){
 }
 
 // Auto-load data on first visit to step 7
+
+// ── CONTEXT RIBBON — shows what's set from prior steps ─────────────────
+function renderCtxRibbon(step){
+  const ribbonId = 'ctx-'+step;
+  const el = document.getElementById(ribbonId);
+  if(!el) return;
+  updateRS();
+  const items = [];
+  if(RS.q.question) items.push({label:'Question set', cls:'ctx-set'});
+  else items.push({label:'No question yet', cls:'ctx-empty'});
+  if(step >= 2 && RS.lit.ai) items.push({label:'Lit gap mapped', cls:'ctx-set'});
+  if(step >= 3 && RS.method.ai) items.push({label:'Methodology designed', cls:'ctx-set'});
+  if(step >= 4 && RS.data.ai) items.push({label:'Data sources mapped', cls:'ctx-set'});
+  if(step >= 5 && RS.output.ai) items.push({label:'Output framework built', cls:'ctx-set'});
+  if(step >= 6 && RS.geo.state) items.push({label:'Scope: '+RS.geo.state, cls:'ctx-set'});
+  else if(step >= 6) items.push({label:'Scope: '+RS.geo.scope, cls:'ctx-set'});
+  if(step >= 7 && RS.extract.ai) items.push({label:RS.extract.rows.length+' data rows analysed', cls:'ctx-set'});
+  const done = stepDone.filter(Boolean).length;
+  el.innerHTML = '<span style="color:var(--text3);font-size:9px;margin-right:4px">▸ FROM PRIOR STEPS:</span>'
+    + items.map(i=>`<span class="ctx-tag ${i.cls}">${i.label}</span>`).join('')
+    + (done > 0 ? `<span style="margin-left:auto;color:var(--text3);font-size:9px">${done}/7 steps complete</span>` : '');
+}
+
+// ── GENERATE FULL INTEGRATED RESEARCH PAPER ────────────────────────────
+function generateFullReport(){
+  updateRS();
+  var r = RS;
+  var now = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var stepsOk = stepDone.filter(Boolean).length;
+
+  // ── helper: AI text → safe HTML (no backticks) ──────────────────────
+  function ah(txt){
+    if(!txt) return '<p style="color:#999;font-style:italic">Not yet analysed — run this step first.</p>';
+    return txt
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^#{1,3}\s(.+)$/gm,'<h4>$1</h4>')
+      .split('\n').map(function(l){ return l.trim() ? '<p>'+l+'</p>' : ''; }).join('');
+  }
+
+  // ── pre-compute all conditional sections ────────────────────────────
+  var rq = r.q.question || "CSR Impact Attribution in India's Aspirational Districts";
+
+  var hypoHtml = r.q.hypothesis
+    ? '<p><strong>Hypothesis:</strong> ' + r.q.hypothesis + '</p>'
+    : '';
+
+  var knownHtml = r.lit.known
+    ? '<p><strong>Existing knowledge base:</strong> ' + r.lit.known + '</p>'
+    : '';
+
+  var methodsHtml = r.method.selected.length > 0
+    ? '<p><strong>Selected approaches:</strong> ' + r.method.selected.join(' · ') + '</p>'
+    : '';
+
+  var constraintsHtml = r.method.constraints
+    ? '<p><strong>Constraints:</strong> ' + r.method.constraints + '</p>'
+    : '';
+
+  var audienceHtml = r.output.audience
+    ? '<p><strong>Target audience:</strong> ' + r.output.audience + '</p>'
+    : '';
+
+  var geoSection;
+  if(r.geo.state && r.geo.stateData){
+    var sd = r.geo.stateData;
+    geoSection = '<p><strong>Scope locked to:</strong> ' + r.geo.state + ' (' + r.geo.scope + ' mode)</p>'
+      + '<p><strong>CSR spend:</strong> \u20b9' + (sd.csr||'—') + ' Cr &nbsp;|&nbsp; '
+      + '<strong>Aspirational districts:</strong> ' + (sd.aspDist != null ? sd.aspDist : '—') + ' &nbsp;|&nbsp; '
+      + '<strong>Indicator delta:</strong> +' + (sd.delta||'—') + ' pts &nbsp;|&nbsp; '
+      + '<strong>Top sector:</strong> ' + (sd.top||'—') + '</p>'
+      + '<p>State-level scope reduces sample but increases contextual validity. District fixed effects become the primary methodological control.</p>';
+  } else {
+    geoSection = '<p>Scope: <strong>India-wide</strong> — all 28 states and 112 aspirational districts included.</p>';
+  }
+
+  var dataFilters = r.extract.rows.length > 0
+    ? '<p><strong>Filters:</strong> Source: ' + r.extract.source.toUpperCase()
+      + ' · Geography: ' + r.extract.geo
+      + ' · Year: ' + r.extract.year
+      + ' · Sector: ' + r.extract.sector
+      + ' · Records: ' + r.extract.rows.length + '</p>'
+    : '';
+
+  var tableRows = r.extract.rows.slice(0,25).map(function(row){
+    return '<tr><td>' + row.source.toUpperCase() + '</td>'
+      + '<td><strong>' + row.geo + '</strong>' + (row.aspDist?' ●':'') + '</td>'
+      + '<td>' + row.year + '</td>'
+      + '<td>' + row.sector + '</td>'
+      + '<td>' + (row.indicator||'—') + '</td>'
+      + '<td style="text-align:right;font-weight:700;color:#8b0000">' + row.value + '</td>'
+      + '<td style="color:#888">' + (row.notes||'') + '</td></tr>';
+  }).join('');
+
+  var moreRows = r.extract.rows.length > 25
+    ? '<p style="font-style:italic;color:#888;font-size:11px">Showing 25 of ' + r.extract.rows.length + ' records.</p>'
+    : '';
+
+  var noData = r.extract.rows.length === 0
+    ? '<p style="color:#888;font-style:italic">No data extracted — go to Step 7 and apply filters.</p>'
+    : '';
+
+  var dataTable = r.extract.rows.length > 0
+    ? dataFilters
+      + '<table><thead><tr><th>Source</th><th>State</th><th>Year</th><th>Sector</th><th>Indicator</th><th>Value</th><th>Notes</th></tr></thead>'
+      + '<tbody>' + tableRows + '</tbody></table>'
+      + moreRows
+    : noData;
+
+  var stateCtx = r.geo.state
+    ? 'The geospatial layer locked scope to ' + r.geo.state + ', contributing '
+      + ((r.geo.stateData && r.geo.stateData.aspDist) || 0) + ' aspirational districts to the sample. '
+      + 'The extracted dataset (' + r.extract.rows.length + ' records) provides the empirical foundation for the '
+      + r.geo.state + '-level sub-analysis.'
+    : 'The India-wide scope means the extracted dataset (' + r.extract.rows.length + ' records) covers all aspirational district states. '
+      + 'Geographic concentration visible in the map directly contextualises the mismatch patterns in the extracted data.';
+
+  var methodCtx = r.method.selected.length > 0
+    ? 'The selected approach (' + r.method.selected.slice(0,2).join(', ') + ') is operationalised through the data sources identified in Step 4.'
+    : 'The panel data methodology is operationalised through the MCA CSR portal, NITI Aayog delta rankings, and supplementary NHM/DISE data.';
+
+  var synthesis = '<p>The research question — <em>"' + rq + '"</em> — is answered by triangulating four evidence layers.</p>'
+    + '<p><strong>Layer 1 \u00d7 Layer 2 (Question + Literature):</strong> The literature gap analysis confirms that district-level CSR-to-indicator attribution has not been systematically studied, validating the novelty of this research question.</p>'
+    + '<p><strong>Layer 3 \u00d7 Layer 4 (Methodology + Data):</strong> ' + methodCtx + ' The primary limitation is data granularity — district-level CSR data exists but implementing agency quality data does not.</p>'
+    + '<p><strong>Layer 6 \u00d7 Layer 7 (Geography + Data):</strong> ' + stateCtx + '</p>'
+    + '<p><strong>Overarching synthesis:</strong> All layers converge on a consistent finding — CSR allocation in aspirational districts follows corporate operational geography and comfort with legible sectors (education, health), not development need or SROI potential. Gender equality and livelihoods — highest-SROI sectors — remain critically underfunded.</p>';
+
+  var recommendations = '<p><strong>For corporates:</strong> Reallocate CSR toward high-SROI underfunded sectors (gender 4.3:1, livelihoods 3.7:1) in aspirational districts. Prioritise Bihar, Jharkhand, Assam — states where government coverage is strong but CSR is absent.</p>'
+    + '<p><strong>For implementing agencies:</strong> Build baseline data systems before programme launch. 72% of CSR M&E lacks structured baseline data — making outcome attribution and mandatory Rule 8(3) impact assessment undeliverable.</p>'
+    + '<p><strong>For policy:</strong> MCA should introduce a geographic incentive — allow companies to count aspirational district CSR at 1.25\u00d7 for 2% calculation. This would shift allocation toward high-need zones without hard mandate.</p>'
+    + '<p><strong>For future research:</strong> Extend panel to FY 2021-23. Incorporate NFHS-5 district data as independent validation. Test whether CSR-1 compliance post-April 2021 moderates the CSR-to-indicator relationship.</p>';
+
+  var stepsBar = stepDone.map(function(d,i){
+    return '<div class="sb ' + (d?'done':'empty') + '" title="Step '+(i+1)+'"></div>';
+  }).join('');
+
+  var methodMeta = r.method.selected.length > 0 ? r.method.selected[0] : 'Panel Data Analysis';
+  var sourcesMeta = r.extract.rows.length > 0 ? r.extract.rows.length + ' records extracted' : 'MCA · NITI · NHM · DISE';
+  var geoMeta = r.geo.state ? r.geo.state + ' (state-level)' : 'India-wide';
+
+  // ── build report string — NO nested backticks ─────────────────────
+  var report = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<style>'
+    + '@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap");'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:"IBM Plex Sans",sans-serif;color:#1a1a1a;background:#fff;font-size:12.5px;line-height:1.75;padding:48px 56px;max-width:860px;margin:0 auto}'
+    + '.cover{border-bottom:3px solid #8b0000;padding-bottom:24px;margin-bottom:32px}'
+    + '.cover-eye{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:10px}'
+    + '.cover-title{font-family:"IBM Plex Serif",serif;font-size:24px;font-weight:600;line-height:1.2;margin-bottom:6px}'
+    + '.cover-sub{font-family:"IBM Plex Serif",serif;font-size:13px;font-weight:300;font-style:italic;color:#555;margin-bottom:18px;line-height:1.4}'
+    + '.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}'
+    + '.meta-cell{font-family:"IBM Plex Mono",monospace;font-size:10px;color:#888;padding:6px 10px;background:#f8f8f6;border-left:2px solid #ddd}'
+    + '.meta-cell span{color:#1a1a1a;font-weight:600;display:block;margin-top:2px}'
+    + '.steps-bar{display:flex;gap:4px;margin-top:16px}'
+    + '.sb{flex:1;height:4px;border-radius:2px}'
+    + '.sb.done{background:#8b0000}.sb.empty{background:#eee}'
+    + '.abstract{background:#f8f8f6;border-left:3px solid #8b0000;padding:14px 18px;margin-bottom:32px}'
+    + '.abs-label{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:8px}'
+    + '.abs-text{font-family:"IBM Plex Serif",serif;font-size:13px;line-height:1.75;color:#333;font-style:italic}'
+    + '.section{margin-bottom:28px}'
+    + '.sec-num{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;letter-spacing:.15em;color:#8b0000;text-transform:uppercase;margin-bottom:4px}'
+    + '.sec-title{font-family:"IBM Plex Serif",serif;font-size:17px;font-weight:600;color:#1a1a1a;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #e8e8e8}'
+    + 'p{margin-bottom:10px;color:#2a2a2a}'
+    + 'h4{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000;margin:14px 0 5px}'
+    + 'strong{font-weight:700;color:#1a1a1a} em{font-style:italic;color:#444}'
+    + 'table{width:100%;border-collapse:collapse;font-size:11px;margin:12px 0}'
+    + 'th{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:#888;text-align:left;padding:5px 8px;border-bottom:2px solid #1a1a1a;background:#f8f8f6}'
+    + 'td{padding:5px 8px;border-bottom:1px solid #ebebeb;vertical-align:top}'
+    + '.lk{font-family:"IBM Plex Mono",monospace;font-size:9px;color:#8b0000;background:rgba(139,0,0,.06);padding:1px 7px;border-radius:2px;margin-right:4px}'
+    + '.synth{background:#f8f8f6;padding:20px;border-left:3px solid #8b0000;border-radius:0 4px 4px 0}'
+    + '.footer{margin-top:40px;padding-top:14px;border-top:1px solid #e8e8e8;font-family:"IBM Plex Mono",monospace;font-size:10px;color:#999;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}'
+    + '@media print{body{padding:20px 28px}@page{margin:12mm;size:A4}}'
+    + '</style></head><body>'
+
+    + '<div class="cover">'
+    + '<div class="cover-eye">Developmental Research Co-Pilot &middot; Integrated Research Paper &middot; ' + now + '</div>'
+    + '<div class="cover-title">' + rq + '</div>'
+    + '<div class="cover-sub">A preliminary research paper synthesising seven analytical layers &mdash; literature, methodology, data sources, geospatial scope, and extracted evidence</div>'
+    + '<div class="meta-grid">'
+    + '<div class="meta-cell">Sector<span>' + (r.q.sector||'CSR &amp; Livelihoods') + '</span></div>'
+    + '<div class="meta-cell">Geography<span>' + (r.q.geo||'India &mdash; Aspirational Districts') + '</span></div>'
+    + '<div class="meta-cell">Methodology<span>' + methodMeta + '</span></div>'
+    + '<div class="meta-cell">Deliverable<span>' + (r.output.deliverable||'Research Brief') + '</span></div>'
+    + '<div class="meta-cell">Data Sources<span>' + sourcesMeta + '</span></div>'
+    + '<div class="meta-cell">Geospatial Scope<span>' + geoMeta + '</span></div>'
+    + '<div class="meta-cell">Steps Completed<span>' + stepsOk + ' of 7 analytical layers</span></div>'
+    + '<div class="meta-cell">Author<span>Astha Deep</span></div>'
+    + '</div>'
+    + '<div class="steps-bar">' + stepsBar + '</div>'
+    + '</div>'
+
+    + '<div class="abstract"><div class="abs-label">Abstract</div>'
+    + '<div class="abs-text">This preliminary research paper examines whether CSR expenditure in India\'s 112 NITI Aayog aspirational districts measurably moves development indicators &mdash; and if so, in which sectors and with what lag structure. Using a five-stage AI-augmented research workflow supplemented by geospatial scope analysis and structured data extraction across ' + sourcesMeta + ', this paper proposes a panel data framework for district-level CSR attribution analysis. Key preliminary finding: a systematic mismatch exists between CSR sector allocation (dominated by education and health) and development indicator responsiveness (strongest in WASH, livelihoods, and gender sectors). Generated by Developmental Research Co-Pilot &middot; by Astha.</div>'
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 01</span> Research Question &amp; Hypothesis</div>'
+    + '<div class="sec-title">Research Question &amp; Initial Hypothesis</div>'
+    + '<p><strong>Research Question:</strong> ' + rq + '</p>'
+    + hypoHtml
+    + '<p>This question is answerable with secondary data alone &mdash; MCA National CSR Portal provides district-level expenditure, NITI Aayog publishes composite delta rankings for all 112 aspirational districts, and supplementary NHM/DISE data provides sub-indicator validation.</p>'
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 02</span> Literature Review</div>'
+    + '<div class="sec-title">Literature Gap Analysis</div>'
+    + ah(r.lit.ai) + knownHtml
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 03</span> Methodology</div>'
+    + '<div class="sec-title">Research Methodology</div>'
+    + methodsHtml + constraintsHtml + ah(r.method.ai)
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 04</span> Data Sources</div>'
+    + '<div class="sec-title">Data Source Mapping</div>'
+    + ah(r.data.ai)
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 05</span> Output Framework</div>'
+    + '<div class="sec-title">Output Design &amp; Audience</div>'
+    + audienceHtml + ah(r.output.ai)
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 06</span> Geospatial Scope</div>'
+    + '<div class="sec-title">Geographic Scope &amp; Spatial Analysis</div>'
+    + geoSection
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Layer 07</span> Data Extraction</div>'
+    + '<div class="sec-title">Extracted Evidence &amp; Data Analysis</div>'
+    + dataTable + ah(r.extract.ai)
+    + '</div>'
+
+    + '<div class="section synth"><div class="sec-num"><span class="lk">All Layers</span> Integrated Synthesis</div>'
+    + '<div class="sec-title">Cross-Layer Analysis &amp; Integrated Findings</div>'
+    + synthesis
+    + '</div>'
+
+    + '<div class="section"><div class="sec-num"><span class="lk">Recommendations</span></div>'
+    + '<div class="sec-title">Preliminary Policy &amp; Practice Recommendations</div>'
+    + recommendations
+    + '</div>'
+
+    + '<div class="footer">'
+    + '<span>Developmental Research Co-Pilot &middot; by Astha &middot; Preliminary research made easy</span>'
+    + '<span>Generated: ' + now + ' &middot; ' + stepsOk + '/7 layers complete</span>'
+    + '<span>Data: MCA &middot; NITI Aayog &middot; SEBI BRSR &middot; NFHS &middot; MGNREGS &middot; 20 sources</span>'
+    + '</div>'
+    + '</body></html>';
+
+  var win = window.open('','_blank');
+  win.document.write(report);
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 800);
+}
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
 // ── DATA EXTRACTION ────────────────────────────────────────────────────────
@@ -2300,6 +2546,8 @@ async function deAnalyse(){
 
   body.innerHTML = formatOutput(text);
   document.getElementById('de-dl-row').style.display = 'flex';
+  RS.extract.ai = text;
+  updateRS();
 
   btn.disabled = false;
   btn.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg> Re-analyse';
@@ -2321,7 +2569,8 @@ function downloadSheet(){
   URL.revokeObjectURL(a.href);
 }
 
-function downloadReport(){
+function downloadReport(){ generateFullReport(); return; // legacy
+  const _unused = function(){
   const src   = document.getElementById('de-source').value;
   const geo   = document.getElementById('de-geo').value;
   const yr    = document.getElementById('de-year').value;
@@ -2358,6 +2607,29 @@ function downloadReport(){
   strong{font-weight:600;color:#1a1a1a}
   .footer{margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;display:flex;justify-content:space-between}
   @media print{body{padding:20px 30px}@page{margin:15mm}}
+
+/* ── FAB REPORT BUTTON ─────── */
+.fab-report{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:none;align-items:center;gap:8px;
+  background:#8b0000;color:#fff;border:none;
+  padding:12px 20px;border-radius:30px;
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.05em;
+  cursor:pointer;box-shadow:0 4px 20px rgba(139,0,0,.4);
+  transition:all .2s;
+}
+.fab-report:hover{background:#6d0000;transform:translateY(-2px);box-shadow:0 6px 24px rgba(139,0,0,.5)}
+.fab-report svg{width:15px;height:15px}
+/* step context ribbon */
+.ctx-ribbon{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  padding:8px 0 12px;margin-bottom:4px;
+  border-bottom:1px solid var(--border);
+  display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+}
+.ctx-tag{padding:2px 8px;border-radius:2px;font-size:9px;font-weight:600;letter-spacing:.06em}
+.ctx-set{background:rgba(46,125,50,.1);color:#2e7d32;border:1px solid rgba(46,125,50,.25)}
+.ctx-empty{background:rgba(0,0,0,.04);color:var(--text3);border:1px solid var(--border)}
 </style>
 </head><body>
 <div class="hdr">
@@ -2395,6 +2667,10 @@ function downloadReport(){
   <span>Developmental Research Co-Pilot · by Astha · Preliminary research made easy</span>
   <span>Data sources: MCA CSR Portal · NITI Aayog · DISE · NHM · RBI</span>
 </div>
+<button class="fab-report" id="fab-report" onclick="generateFullReport()">
+  <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2h7l3 3v9H3V2zm7 0v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1.2"/></svg>
+  Generate Research Paper
+</button>
 </body></html>`;
 
   const win = window.open('','_blank');
@@ -2410,6 +2686,258 @@ function markDataComplete(){
 }
 
 // Auto-load data on first visit to step 7
+
+// ── CONTEXT RIBBON — shows what's set from prior steps ─────────────────
+function renderCtxRibbon(step){
+  const ribbonId = 'ctx-'+step;
+  const el = document.getElementById(ribbonId);
+  if(!el) return;
+  updateRS();
+  const items = [];
+  if(RS.q.question) items.push({label:'Question set', cls:'ctx-set'});
+  else items.push({label:'No question yet', cls:'ctx-empty'});
+  if(step >= 2 && RS.lit.ai) items.push({label:'Lit gap mapped', cls:'ctx-set'});
+  if(step >= 3 && RS.method.ai) items.push({label:'Methodology designed', cls:'ctx-set'});
+  if(step >= 4 && RS.data.ai) items.push({label:'Data sources mapped', cls:'ctx-set'});
+  if(step >= 5 && RS.output.ai) items.push({label:'Output framework built', cls:'ctx-set'});
+  if(step >= 6 && RS.geo.state) items.push({label:'Scope: '+RS.geo.state, cls:'ctx-set'});
+  else if(step >= 6) items.push({label:'Scope: '+RS.geo.scope, cls:'ctx-set'});
+  if(step >= 7 && RS.extract.ai) items.push({label:RS.extract.rows.length+' data rows analysed', cls:'ctx-set'});
+  const done = stepDone.filter(Boolean).length;
+  el.innerHTML = '<span style="color:var(--text3);font-size:9px;margin-right:4px">▸ FROM PRIOR STEPS:</span>'
+    + items.map(i=>`<span class="ctx-tag ${i.cls}">${i.label}</span>`).join('')
+    + (done > 0 ? `<span style="margin-left:auto;color:var(--text3);font-size:9px">${done}/7 steps complete</span>` : '');
+}
+
+// ── GENERATE FULL INTEGRATED RESEARCH PAPER ────────────────────────────
+function generateFullReport(){
+  updateRS();
+  const r = RS;
+  const now = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Helper: format AI text to HTML
+  function aiHtml(txt){
+    if(!txt) return '<p style="color:#999;font-style:italic">Not yet analysed — run this step first.</p>';
+    return txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+              .replace(/^#{1,3}\s(.+)$/gm,'<h4>$1</h4>')
+              .split('\n').map(l=>l.trim()?`<p>${l}</p>`:'').join('');
+  }
+
+  // Geo section
+  const geoSection = r.geo.state ? `
+    <p><strong>Geographic scope locked to:</strong> ${r.geo.state} (${r.geo.scope} mode)</p>
+    <p><strong>CSR spend:</strong> ₹${r.geo.stateData?.csr || '—'} Cr &nbsp;|&nbsp;
+       <strong>Aspirational districts:</strong> ${r.geo.stateData?.aspDist ?? '—'} &nbsp;|&nbsp;
+       <strong>Indicator delta:</strong> +${r.geo.stateData?.delta || '—'} pts &nbsp;|&nbsp;
+       <strong>Top sector:</strong> ${r.geo.stateData?.top || '—'}</p>
+    <p>This state-level scope reduces the sample size but increases contextual validity. 
+    State fixed effects are less critical when analysis is constrained to a single state — 
+    district-level heterogeneity controls become the primary methodological requirement.</p>
+  ` : `<p>Scope: <strong>India-wide</strong> — all 28 states and 112 aspirational districts included in analysis.</p>`;
+
+  // Data table rows
+  const tableRows = r.extract.rows.slice(0,25).map(row=>
+    `<tr><td>${row.source.toUpperCase()}</td><td><strong>${row.geo}</strong>${row.aspDist?' ●':''}</td>
+     <td>${row.year}</td><td>${row.sector}</td><td>${row.indicator||'—'}</td>
+     <td style="text-align:right;font-weight:700;color:#8b0000">${row.value}</td><td style="color:#888">${row.notes||''}</td></tr>`
+  ).join('');
+
+  // Integrated synthesis — cross-links all layers
+  const synthesis = `
+    <p>The research question — <em>"${r.q.question || 'CSR impact attribution in aspirational districts'}"</em> — 
+    is answered by triangulating four evidence layers in this study.</p>
+    
+    <p><strong>Layer 1 × Layer 2 (Question + Literature):</strong> The literature gap analysis confirms that 
+    district-level CSR-to-indicator attribution has not been systematically studied with available public data, 
+    validating the novelty of this research question. The gap identified — absence of panel-level cross-sector 
+    analysis — directly shapes the methodological choice in Layer 3.</p>
+    
+    <p><strong>Layer 3 × Layer 4 (Methodology + Data):</strong> ${r.method.selected.length > 0 
+      ? 'The selected approach (' + r.method.selected.slice(0,2).join(', ') + ') is operationalised through the data sources identified in Step 4.'
+      : 'The panel data methodology is operationalised through the MCA CSR portal, NITI Aayog delta rankings, and supplementary NHM/DISE data identified in Step 4.'} 
+    Critically, the data source mapping reveals that the primary limitation is not data availability but 
+    data granularity — district-level CSR data exists but implementing agency quality data does not, 
+    constraining the attribution model.</p>
+    
+    <p><strong>Layer 6 × Layer 7 (Geography + Data Extraction):</strong> 
+    ${r.geo.state 
+      ? `The geospatial analysis locked scope to ${r.geo.state}, which contributes ${r.geo.stateData?.aspDist || 0} aspirational districts to the sample. The extracted data (${r.extract.rows.length} records across ${r.extract.source === 'all' ? 'multiple sources' : r.extract.source.toUpperCase()}) provides the empirical foundation for the ${r.geo.state}-level sub-analysis proposed in the output framework.`
+      : `The India-wide geospatial scope means the extracted dataset (${r.extract.rows.length} records) covers all aspirational district states. The geographic concentration of CSR visible in the map — Maharashtra and Gujarat dominating — directly contextualises the mismatch patterns in the extracted data.`
+    }</p>
+
+    <p><strong>Overarching synthesis:</strong> The five analytical layers converge on a consistent finding — 
+    CSR allocation in aspirational districts is driven by corporate operational geography and comfort with 
+    legible sectors (education, health), not by development need or SROI potential. The data extraction 
+    confirms that gender equality and livelihoods — the highest-SROI sectors — remain catastrophically 
+    underfunded. The methodology proposed provides a rigorous, defensible framework for quantifying this 
+    mismatch and its consequences for development indicator trajectories.</p>
+  `;
+
+  // Recommendations
+  const recommendations = `
+    <p><strong>For corporates:</strong> Reallocate CSR toward high-SROI, underfunded sectors 
+    (gender equality: 4.3:1 SROI; livelihoods: 3.7:1) in aspirational districts where marginal 
+    returns to additional investment are highest. Prioritise states where government scheme coverage 
+    is strong (reducing substitution risk) but CSR is absent — Bihar, Jharkhand, Assam.</p>
+    
+    <p><strong>For implementing agencies:</strong> Build baseline data systems before programme 
+    launch. 72% of current CSR M&E lacks structured baseline data — making outcome attribution 
+    impossible and third-party impact assessment (mandatory under Rule 8(3) for ≥₹1 Cr projects) 
+    undeliverable.</p>
+    
+    <p><strong>For policy:</strong> MCA should introduce a geographic incentive — allow companies 
+    to count aspirational district CSR at 1.25× for 2% calculation purposes. This would materially 
+    shift allocation toward high-need zones without regulatory mandate.</p>
+    
+    <p><strong>For future research:</strong> Extend this panel to FY 2021-23 using the newly 
+    expanded CSR portal data. Incorporate NFHS-5 district data as an independent validation of 
+    indicator delta scores. Test whether CSR-1 registration compliance (post-April 2021) moderates 
+    the CSR-to-indicator relationship.</p>
+  `;
+
+  const report = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'IBM Plex Sans',sans-serif;color:#1a1a1a;background:#fff;font-size:12.5px;line-height:1.75;padding:48px 56px;max-width:860px;margin:0 auto}
+    .cover{border-bottom:3px solid #8b0000;padding-bottom:24px;margin-bottom:32px}
+    .cover-eye{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:10px}
+    .cover-title{font-family:'IBM Plex Serif',serif;font-size:26px;font-weight:600;line-height:1.2;margin-bottom:6px}
+    .cover-sub{font-family:'IBM Plex Serif',serif;font-size:14px;font-weight:300;font-style:italic;color:#555;margin-bottom:18px;line-height:1.4}
+    .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+    .meta-cell{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888;padding:6px 10px;background:#f8f8f6;border-left:2px solid #ddd}
+    .meta-cell span{color:#1a1a1a;font-weight:600;display:block;margin-top:2px}
+    .steps-bar{display:flex;gap:4px;margin-top:16px}
+    .sb{flex:1;height:4px;border-radius:2px}
+    .sb.done{background:#8b0000}.sb.empty{background:#eee}
+    .abstract{background:#f8f8f6;border-left:3px solid #8b0000;padding:14px 18px;margin-bottom:32px}
+    .abs-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8b0000;margin-bottom:8px}
+    .abs-text{font-family:'IBM Plex Serif',serif;font-size:13px;line-height:1.75;color:#333;font-style:italic}
+    .section{margin-bottom:28px;page-break-inside:avoid}
+    .sec-num{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.15em;color:#8b0000;text-transform:uppercase;margin-bottom:4px}
+    .sec-title{font-family:'IBM Plex Serif',serif;font-size:17px;font-weight:600;color:#1a1a1a;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid #e8e8e8}
+    p{margin-bottom:10px;color:#2a2a2a}
+    h4{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8b0000;margin:14px 0 5px}
+    strong{font-weight:700;color:#1a1a1a}
+    em{font-style:italic;color:#444}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin:12px 0}
+    th{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:#888;text-align:left;padding:5px 8px;border-bottom:2px solid #1a1a1a;background:#f8f8f6}
+    td{padding:5px 8px;border-bottom:1px solid #ebebeb;vertical-align:top}
+    .layer-link{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8b0000;background:rgba(139,0,0,.06);padding:1px 7px;border-radius:2px;margin-right:4px}
+    .footer{margin-top:40px;padding-top:14px;border-top:1px solid #e8e8e8;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+    @media print{body{padding:20px 28px}@page{margin:12mm;size:A4}}
+  </style>
+  </head><body>
+
+  <div class="cover">
+    <div class="cover-eye">Developmental Research Co-Pilot · Integrated Research Paper · ${now}</div>
+    <div class="cover-title">${r.q.question || 'CSR Impact Attribution in India's Aspirational Districts'}</div>
+    <div class="cover-sub">A preliminary research paper synthesising seven analytical layers — literature, methodology, data sources, geospatial scope, and extracted evidence</div>
+    <div class="meta-grid">
+      <div class="meta-cell">Sector<span>${r.q.sector || 'CSR & Livelihoods'}</span></div>
+      <div class="meta-cell">Geography<span>${r.q.geo || 'India — Aspirational Districts (112)'}</span></div>
+      <div class="meta-cell">Methodology<span>${r.method.selected.length > 0 ? r.method.selected[0] : 'Panel Data Analysis'}</span></div>
+      <div class="meta-cell">Deliverable<span>${r.output.deliverable || 'Research Brief'}</span></div>
+      <div class="meta-cell">Data Sources<span>${r.extract.rows.length > 0 ? r.extract.rows.length + ' records extracted' : 'MCA · NITI · NHM · DISE'}</span></div>
+      <div class="meta-cell">Geospatial Scope<span>${r.geo.state ? r.geo.state + ' (state-level)' : 'India-wide'}</span></div>
+      <div class="meta-cell">Steps Completed<span>${stepDone.filter(Boolean).length} of 7 analytical layers</span></div>
+      <div class="meta-cell">Author<span>Astha Deep</span></div>
+    </div>
+    <div class="steps-bar">
+      ${stepDone.map((d,i)=>`<div class="sb ${d?'done':'empty'}" title="Step ${i+1}"></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="abstract">
+    <div class="abs-label">Abstract</div>
+    <div class="abs-text">This preliminary research paper examines whether CSR expenditure in India's 112 NITI Aayog aspirational districts measurably moves development indicators — and if so, in which sectors and with what lag structure. Using a five-stage AI-augmented research workflow (question framing → literature gap → methodology → data mapping → output design), supplemented by geospatial scope analysis and structured data extraction across ${r.extract.rows.length > 0 ? r.extract.rows.length + ' records from 20 government data portals' : 'multiple government data portals'}, this paper proposes a panel data framework for district-level CSR attribution analysis. Key preliminary finding: a systematic mismatch exists between CSR sector allocation (dominated by education and health) and development indicator responsiveness (strongest in WASH, livelihoods, and gender sectors). Generated by Developmental Research Co-Pilot · by Astha.</div>
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 01</span> Research Question & Hypothesis</div>
+    <div class="sec-title">Research Question & Initial Hypothesis</div>
+    <p><strong>Research Question:</strong> ${r.q.question || 'Does CSR expenditure in India's NITI Aayog aspirational districts measurably move development indicators — and which sectors show the strongest attribution at T+1 and T+2 year lags?'}</p>
+    ${r.q.hypothesis ? `<p><strong>Hypothesis:</strong> ${r.q.hypothesis}</p>` : ''}
+    <p>This question is answerable with secondary data alone — MCA National CSR Portal provides district-level expenditure, NITI Aayog publishes composite delta rankings for all 112 aspirational districts, and supplementary NHM/DISE data provides sub-indicator validation.</p>
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 02</span> Literature Review</div>
+    <div class="sec-title">Literature Gap Analysis</div>
+    ${aiHtml(r.lit.ai)}
+    ${r.lit.known ? `<p><strong>Existing knowledge base:</strong> ${r.lit.known}</p>` : ''}
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 03</span> Methodology</div>
+    <div class="sec-title">Research Methodology</div>
+    ${r.method.selected.length > 0 ? `<p><strong>Selected approaches:</strong> ${r.method.selected.join(' · ')}</p>` : ''}
+    ${r.method.constraints ? `<p><strong>Constraints:</strong> ${r.method.constraints}</p>` : ''}
+    ${aiHtml(r.method.ai)}
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 04</span> Data Sources</div>
+    <div class="sec-title">Data Source Mapping</div>
+    ${aiHtml(r.data.ai)}
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 05</span> Output Framework</div>
+    <div class="sec-title">Output Design & Audience</div>
+    ${r.output.audience ? `<p><strong>Target audience:</strong> ${r.output.audience}</p>` : ''}
+    ${aiHtml(r.output.ai)}
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 06</span> Geospatial Scope</div>
+    <div class="sec-title">Geographic Scope & Spatial Analysis</div>
+    ${geoSection}
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Layer 07</span> Data Extraction</div>
+    <div class="sec-title">Extracted Evidence & Data Analysis</div>
+    ${r.extract.rows.length > 0 ? `
+    <p><strong>Filters applied:</strong> Source: ${r.extract.source.toUpperCase()} · Geography: ${r.extract.geo} · Year: ${r.extract.year} · Sector: ${r.extract.sector} · Records: ${r.extract.rows.length}</p>
+    <table>
+      <thead><tr><th>Source</th><th>State</th><th>Year</th><th>Sector</th><th>Indicator</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    ${r.extract.rows.length > 25 ? `<p style="font-style:italic;color:#888;font-size:11px">Showing 25 of ${r.extract.rows.length} records. Download .csv for full dataset.</p>` : ''}
+    ` : '<p style="color:#888;font-style:italic">No data extracted yet — go to Step 7 and apply filters.</p>'}
+    ${aiHtml(r.extract.ai)}
+  </div>
+
+  <div class="section" style="background:#f8f8f6;padding:20px;border-left:3px solid #8b0000;border-radius:0 4px 4px 0">
+    <div class="sec-num"><span class="layer-link">All Layers</span> Integrated Synthesis</div>
+    <div class="sec-title">Cross-Layer Analysis & Integrated Findings</div>
+    ${synthesis}
+  </div>
+
+  <div class="section">
+    <div class="sec-num"><span class="layer-link">Recommendations</span></div>
+    <div class="sec-title">Preliminary Policy & Practice Recommendations</div>
+    ${recommendations}
+  </div>
+
+  <div class="footer">
+    <span>Developmental Research Co-Pilot · by Astha · Preliminary research made easy</span>
+    <span>Generated: ${now} · ${stepDone.filter(Boolean).length}/7 layers complete</span>
+    <span>Data: MCA · NITI Aayog · SEBI BRSR · NFHS · MGNREGS · 20 sources</span>
+  </div>
+  </body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(report);
+  win.document.close();
+  setTimeout(()=>win.print(), 800);
+}
+
 </script>
+<button class="fab-report" id="fab-report" onclick="generateFullReport()">
+  <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2h7l3 3v9H3V2zm7 0v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1.2"/></svg>
+  Generate Research Paper
+</button>
 </body>
 </html>
